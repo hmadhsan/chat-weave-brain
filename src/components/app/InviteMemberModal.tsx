@@ -21,7 +21,6 @@ interface InviteMemberModalProps {
 }
 
 const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMemberModalProps) => {
-  const [email, setEmail] = useState('');
   const [inviteLink, setInviteLink] = useState('');
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -29,17 +28,26 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
   const { user } = useAuth();
 
   const generateInviteLink = async () => {
-    if (!email.trim()) return;
+    if (!user?.id) {
+      toast({
+        title: 'Please sign in',
+        description: 'You need to be signed in to invite members.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setGenerating(true);
     try {
+      const placeholderEmail = `link+${globalThis.crypto?.randomUUID?.() ?? Date.now()}@invite.sidechat.local`;
+
       // Create invitation directly in the database
       const { data: invitation, error } = await supabase
         .from('invitations')
         .insert({
           group_id: groupId,
-          email: email.trim().toLowerCase(),
-          invited_by: user?.id,
+          email: placeholderEmail,
+          invited_by: user.id,
         })
         .select()
         .single();
@@ -88,7 +96,6 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
   };
 
   const handleClose = () => {
-    setEmail('');
     setInviteLink('');
     setCopied(false);
     onClose();
@@ -108,23 +115,15 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
           {!inviteLink ? (
             <>
               <div className="space-y-2">
-                <Label htmlFor="email">Invitee's email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="colleague@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && generateInviteLink()}
-                />
-                <p className="text-xs text-muted-foreground">
-                  We'll generate a unique invite link for this email.
+                <p className="text-sm text-muted-foreground">
+                  Generate a shareable invite link to add someone to{' '}
+                  <span className="font-medium text-foreground">{groupName}</span>. The link expires in 7 days.
                 </p>
               </div>
 
               <Button
                 onClick={generateInviteLink}
-                disabled={!email.trim() || generating}
+                disabled={generating}
                 className="w-full"
               >
                 {generating ? (
@@ -143,7 +142,7 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
           ) : (
             <>
               <div className="space-y-2">
-                <Label>Invite link for {email}</Label>
+                <Label>Invite link</Label>
                 <div className="flex gap-2">
                   <Input
                     readOnly
@@ -157,27 +156,27 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
                     className="shrink-0"
                   >
                     {copied ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-4 h-4 text-primary" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Share this link via WhatsApp, Telegram, or any messaging app. The link expires in 7 days.
+                  Share this link via WhatsApp, Telegram, or any messaging app.
                 </p>
               </div>
 
               <div className="flex gap-2">
                 <Button
                   onClick={() => {
-                    setEmail('');
                     setInviteLink('');
+                    setCopied(false);
                   }}
                   variant="outline"
                   className="flex-1"
                 >
-                  Invite Another
+                  Generate New Link
                 </Button>
                 <Button onClick={handleClose} className="flex-1">
                   Done
