@@ -71,13 +71,14 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
           />
 
           {/* Modal */}
-          <motion.div
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2 }}
-          >
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              className="w-full max-w-md"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
             <div className="relative bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
               {/* Decorative gradient */}
               <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-primary/10 to-transparent" />
@@ -195,7 +196,8 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
                 </AnimatePresence>
               </div>
             </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

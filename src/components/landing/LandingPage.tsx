@@ -98,9 +98,6 @@ const LandingPage = () => {
                 Join Waitlist
                 <ArrowRight className="w-5 h-5" />
               </Button>
-              <Button variant="hero-outline" size="xl">
-                Watch Demo
-              </Button>
             </motion.div>
           </div>
 
