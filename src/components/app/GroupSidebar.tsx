@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Group } from '@/types/threadly';
+import { Group } from '@/types/sidechat';
 import { cn } from '@/lib/utils';
 import { Hash, Plus, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ const GroupSidebar = ({ groups, activeGroupId, onSelectGroup, onCreateGroup }: G
           <div className="w-8 h-8 rounded-lg bg-accent-gradient flex items-center justify-center">
             <MessageSquare className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-display font-bold text-foreground">Threadly</span>
+          <span className="font-display font-bold text-foreground">Sidechat</span>
         </div>
         <div className="flex items-center justify-between">
           <h2 className="font-display font-semibold text-foreground text-sm">Groups</h2>
