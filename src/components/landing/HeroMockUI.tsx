@@ -1,47 +1,139 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { MessageSquare, Users, Sparkles, Send } from 'lucide-react';
+import { MessageSquare, Users, Sparkles, Send, Lock } from 'lucide-react';
+
+// Team members with distinct colors
+const teamMembers = [
+  { name: 'Sarah', color: 'hsl(var(--primary))' },
+  { name: 'Alex', color: 'hsl(262 80% 60%)' },
+  { name: 'Mike', color: 'hsl(190 70% 50%)' },
+  { name: 'Emma', color: 'hsl(340 70% 55%)' },
+  { name: 'James', color: 'hsl(45 90% 50%)' },
+];
+
+// Animation phases with longer durations
+const PHASE_DURATIONS = {
+  groupChat: 5000,      // Show active group chat
+  transition: 1500,     // Transition to private
+  privateChat: 4500,    // Private discussion
+  sendToAI: 1500,       // Send to AI button
+  aiResponse: 3500,     // AI responds
+  reset: 1000,          // Brief pause before loop
+};
 
 const HeroMockUI = () => {
-  const [step, setStep] = useState(0);
-  const [showThread, setShowThread] = useState(false);
+  const [phase, setPhase] = useState<'groupChat' | 'transition' | 'privateChat' | 'sendToAI' | 'aiResponse' | 'reset'>('groupChat');
+  const [visibleMessages, setVisibleMessages] = useState(0);
+  const [privateMessages, setPrivateMessages] = useState(0);
+
+  // Group chat messages (5 members actively chatting)
+  const groupMessages = [
+    { user: 'Sarah', content: "Hey team, we need to finalize the feature roadmap" },
+    { user: 'Mike', content: "I have some ideas for the dashboard" },
+    { user: 'Emma', content: "Let's make sure we prioritize user feedback" },
+    { user: 'James', content: "Agreed! The analytics show interesting patterns" },
+    { user: 'Alex', content: "Sarah, want to brainstorm privately first?" },
+  ];
+
+  // Private thread between Sarah & Alex
+  const threadMessages = [
+    { user: 'Sarah', content: "What if we focus on the onboarding flow?" },
+    { user: 'Alex', content: "Good call. Users drop off at step 3." },
+    { user: 'Sarah', content: "Let's ask AI for suggestions..." },
+  ];
+
+  const aiResponse = "Based on your discussion: Focus on simplifying step 3 with progressive disclosure. Consider adding a skip option with smart defaults.";
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((prev) => {
-        if (prev >= 4) {
-          setShowThread(false);
-          return 0;
+    let timeout: NodeJS.Timeout;
+
+    const runAnimation = () => {
+      // Phase 1: Group Chat - show messages one by one
+      if (phase === 'groupChat') {
+        if (visibleMessages < groupMessages.length) {
+          timeout = setTimeout(() => {
+            setVisibleMessages(prev => prev + 1);
+          }, 800);
+        } else {
+          timeout = setTimeout(() => {
+            setPhase('transition');
+          }, 1200);
         }
-        if (prev === 1) {
-          setShowThread(true);
+      }
+      
+      // Phase 2: Transition to private thread
+      else if (phase === 'transition') {
+        timeout = setTimeout(() => {
+          setPhase('privateChat');
+        }, PHASE_DURATIONS.transition);
+      }
+      
+      // Phase 3: Private chat messages
+      else if (phase === 'privateChat') {
+        if (privateMessages < threadMessages.length) {
+          timeout = setTimeout(() => {
+            setPrivateMessages(prev => prev + 1);
+          }, 1000);
+        } else {
+          timeout = setTimeout(() => {
+            setPhase('sendToAI');
+          }, 800);
         }
-        return prev + 1;
-      });
-    }, 2000);
+      }
+      
+      // Phase 4: Send to AI
+      else if (phase === 'sendToAI') {
+        timeout = setTimeout(() => {
+          setPhase('aiResponse');
+        }, PHASE_DURATIONS.sendToAI);
+      }
+      
+      // Phase 5: AI Response
+      else if (phase === 'aiResponse') {
+        timeout = setTimeout(() => {
+          setPhase('reset');
+        }, PHASE_DURATIONS.aiResponse);
+      }
+      
+      // Reset and loop
+      else if (phase === 'reset') {
+        timeout = setTimeout(() => {
+          setVisibleMessages(0);
+          setPrivateMessages(0);
+          setPhase('groupChat');
+        }, PHASE_DURATIONS.reset);
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, []);
+    runAnimation();
+    return () => clearTimeout(timeout);
+  }, [phase, visibleMessages, privateMessages, groupMessages.length, threadMessages.length]);
 
-  const messages = [
-    { user: 'Sarah', content: 'What about the new feature?', isAI: false },
-    { user: 'Alex', content: 'Let me brainstorm privately first...', isAI: false },
-  ];
-
-  const threadMessages = [
-    { user: 'Alex', content: 'Here are my rough ideas...' },
-    { user: 'Sarah', content: 'I like option 2!' },
-    { user: 'Alex', content: 'Sending to AI for polish...' },
-  ];
-
-  const aiResponse = {
-    user: 'AI',
-    content: 'Based on your discussion, I suggest focusing on user experience improvements...',
-    isAI: true,
-  };
+  const showPrivatePanel = phase !== 'groupChat' && phase !== 'reset';
+  const highlightPrivateMembers = phase !== 'groupChat' && phase !== 'reset';
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div className="relative w-full max-w-3xl mx-auto">
+      {/* Phase indicator */}
+      <div className="flex justify-center gap-3 mb-4">
+        {[
+          { key: 'group', label: 'Group Chat', active: phase === 'groupChat' },
+          { key: 'private', label: 'Private Thread', active: ['transition', 'privateChat', 'sendToAI'].includes(phase) },
+          { key: 'ai', label: 'AI Assist', active: phase === 'aiResponse' },
+        ].map((step) => (
+          <div key={step.key} className="flex items-center gap-2">
+            <motion.div
+              className={`w-2 h-2 rounded-full ${step.active ? 'bg-primary' : 'bg-muted'}`}
+              animate={{ scale: step.active ? [1, 1.3, 1] : 1 }}
+              transition={{ duration: 1, repeat: step.active ? Infinity : 0 }}
+            />
+            <span className={`text-xs font-medium transition-colors duration-300 ${step.active ? 'text-foreground' : 'text-muted-foreground'}`}>
+              {step.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
       <motion.div
         className="relative rounded-2xl overflow-hidden shadow-2xl border border-border/50 bg-card"
         initial={{ opacity: 0, y: 20 }}
@@ -58,55 +150,125 @@ const HeroMockUI = () => {
           <div className="flex-1 text-center">
             <span className="text-xs text-muted-foreground font-medium">Sidechat — Product Team</span>
           </div>
+          {/* Team member avatars */}
+          <div className="flex -space-x-2">
+            {teamMembers.map((member, i) => (
+              <motion.div
+                key={member.name}
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-card"
+                style={{ backgroundColor: member.color, zIndex: 5 - i }}
+                animate={{
+                  opacity: highlightPrivateMembers && !['Sarah', 'Alex'].includes(member.name) ? 0.4 : 1,
+                  scale: highlightPrivateMembers && ['Sarah', 'Alex'].includes(member.name) ? 1.1 : 1,
+                }}
+                transition={{ duration: 0.4 }}
+              >
+                {member.name[0]}
+              </motion.div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex h-[300px]">
+        <div className="flex h-[340px]">
           {/* Sidebar */}
-          <div className="w-16 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-primary" />
+          <div className="w-14 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-primary" />
             </div>
-            <div className="w-10 h-10 rounded-xl bg-muted/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-muted-foreground" />
+            <motion.div 
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              animate={{ 
+                backgroundColor: showPrivatePanel ? 'hsl(var(--primary) / 0.2)' : 'hsl(var(--muted) / 0.1)'
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              <Lock className={`w-4 h-4 ${showPrivatePanel ? 'text-primary' : 'text-muted-foreground'}`} />
+            </motion.div>
+            <div className="w-9 h-9 rounded-xl bg-muted/10 flex items-center justify-center">
+              <Users className="w-4 h-4 text-muted-foreground" />
             </div>
           </div>
 
           {/* Main Chat */}
-          <div className="flex-1 flex flex-col bg-background relative">
-            <div className="flex-1 p-4 space-y-3 overflow-hidden">
-              {messages.map((msg, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: step >= i ? 1 : 0.3, x: 0 }}
-                  transition={{ delay: i * 0.3, duration: 0.4 }}
-                  className="flex gap-2"
-                >
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
-                    {msg.user[0]}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-medium text-foreground">{msg.user}</p>
-                    <p className="text-sm text-muted-foreground">{msg.content}</p>
-                  </div>
-                </motion.div>
-              ))}
+          <motion.div 
+            className="flex-1 flex flex-col bg-background relative"
+            animate={{ 
+              opacity: showPrivatePanel ? 0.6 : 1,
+              filter: showPrivatePanel ? 'blur(1px)' : 'blur(0px)'
+            }}
+            transition={{ duration: 0.4 }}
+          >
+            {/* Group chat header */}
+            <div className="px-4 py-2 border-b border-border/50">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground"># general</span>
+                <span className="text-xs text-muted-foreground">5 members</span>
+              </div>
+            </div>
 
-              {/* AI Response */}
+            <div className="flex-1 p-4 space-y-3 overflow-hidden">
+              {groupMessages.slice(0, visibleMessages).map((msg, i) => {
+                const member = teamMembers.find(m => m.name === msg.user);
+                const isPrivateMember = ['Sarah', 'Alex'].includes(msg.user);
+                
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ 
+                      opacity: highlightPrivateMembers && !isPrivateMember ? 0.4 : 1,
+                      y: 0 
+                    }}
+                    transition={{ duration: 0.3 }}
+                    className="flex gap-2"
+                  >
+                    <motion.div 
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                      style={{ backgroundColor: member?.color }}
+                      animate={{
+                        scale: highlightPrivateMembers && isPrivateMember ? [1, 1.1, 1] : 1,
+                        boxShadow: highlightPrivateMembers && isPrivateMember 
+                          ? '0 0 12px hsl(var(--primary) / 0.5)' 
+                          : '0 0 0px transparent'
+                      }}
+                      transition={{ duration: 0.6, repeat: highlightPrivateMembers && isPrivateMember ? Infinity : 0 }}
+                    >
+                      {msg.user[0]}
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-foreground">{msg.user}</p>
+                      <p className="text-sm text-muted-foreground truncate">{msg.content}</p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {/* AI Response in main chat */}
               <AnimatePresence>
-                {step >= 4 && (
+                {phase === 'aiResponse' && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
                     className="flex gap-2"
                   >
-                    <div className="w-8 h-8 rounded-full bg-sidechat-purple flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-primary-foreground" />
+                    <div className="w-8 h-8 rounded-full bg-sidechat-purple flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1 bg-sidechat-purple/10 rounded-lg p-2 border border-sidechat-purple/20">
-                      <p className="text-xs font-medium text-sidechat-purple">AI Response</p>
-                      <p className="text-sm text-foreground">{aiResponse.content}</p>
+                    <div className="flex-1 bg-sidechat-purple/10 rounded-lg p-3 border border-sidechat-purple/20">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-xs font-medium text-sidechat-purple">AI Assistant</p>
+                        <span className="text-[10px] text-muted-foreground">via Sarah & Alex's thread</span>
+                      </div>
+                      <motion.p 
+                        className="text-sm text-foreground"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.3, duration: 0.5 }}
+                      >
+                        {aiResponse}
+                      </motion.p>
                     </div>
                   </motion.div>
                 )}
@@ -120,50 +282,92 @@ const HeroMockUI = () => {
                 <Send className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Private Thread Panel */}
           <AnimatePresence>
-            {showThread && (
+            {showPrivatePanel && (
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 200, opacity: 1 }}
+                animate={{ width: 220, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="border-l border-border bg-secondary/30 overflow-hidden"
+                transition={{ duration: 0.4, ease: 'easeInOut' }}
+                className="border-l border-primary/30 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden"
               >
-                <div className="p-3 border-b border-border bg-primary/5">
+                <div className="p-3 border-b border-primary/20 bg-primary/5">
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-medium text-foreground">Private Thread</span>
+                    <motion.div 
+                      className="w-2 h-2 rounded-full bg-primary"
+                      animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                    <Lock className="w-3 h-3 text-primary" />
+                    <span className="text-xs font-semibold text-foreground">Private Thread</span>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">Human-only brainstorm</p>
+                  <div className="flex items-center gap-1 mt-2">
+                    {['Sarah', 'Alex'].map((name) => {
+                      const member = teamMembers.find(m => m.name === name);
+                      return (
+                        <div
+                          key={name}
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                          style={{ backgroundColor: member?.color }}
+                        >
+                          {name[0]}
+                        </div>
+                      );
+                    })}
+                    <span className="text-[10px] text-muted-foreground ml-1">Sarah & Alex</span>
+                  </div>
                 </div>
 
-                <div className="p-2 space-y-2">
-                  {threadMessages.map((msg, i) => (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: step >= i + 2 ? 1 : 0.3, x: 0 }}
-                      transition={{ delay: (i + 2) * 0.3, duration: 0.3 }}
-                      className="text-xs"
-                    >
-                      <span className="font-medium text-foreground">{msg.user}: </span>
-                      <span className="text-muted-foreground">{msg.content}</span>
-                    </motion.div>
-                  ))}
+                <div className="p-3 space-y-3">
+                  {threadMessages.slice(0, privateMessages).map((msg, i) => {
+                    const member = teamMembers.find(m => m.name === msg.user);
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex gap-2"
+                      >
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
+                          style={{ backgroundColor: member?.color }}
+                        >
+                          {msg.user[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-medium text-foreground">{msg.user}</p>
+                          <p className="text-xs text-muted-foreground">{msg.content}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
 
-                  {step >= 3 && (
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="w-full mt-2 px-2 py-1.5 bg-sidechat-purple text-primary-foreground text-xs rounded-md flex items-center justify-center gap-1"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      Send to AI
-                    </motion.button>
-                  )}
+                  {/* Send to AI button */}
+                  <AnimatePresence>
+                    {(phase === 'sendToAI' || phase === 'aiResponse') && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ 
+                          opacity: 1, 
+                          scale: phase === 'sendToAI' ? [1, 1.02, 1] : 1, 
+                          y: 0,
+                          boxShadow: phase === 'sendToAI' 
+                            ? ['0 0 0px hsl(262 80% 60% / 0)', '0 0 20px hsl(262 80% 60% / 0.4)', '0 0 0px hsl(262 80% 60% / 0)']
+                            : '0 0 0px transparent'
+                        }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.8, repeat: phase === 'sendToAI' ? Infinity : 0 }}
+                        className="w-full mt-2 px-3 py-2 bg-sidechat-purple text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {phase === 'aiResponse' ? 'Sent!' : 'Send to AI'}
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
                 </div>
               </motion.div>
             )}
@@ -171,8 +375,16 @@ const HeroMockUI = () => {
         </div>
       </motion.div>
 
-      {/* Decorative elements */}
-      <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+      {/* Decorative glow */}
+      <motion.div 
+        className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-3xl"
+        animate={{
+          background: showPrivatePanel 
+            ? 'radial-gradient(circle, hsl(262 80% 60% / 0.08) 0%, transparent 70%)'
+            : 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)'
+        }}
+        transition={{ duration: 0.6 }}
+      />
     </div>
   );
 };
