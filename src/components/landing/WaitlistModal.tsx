@@ -46,27 +46,26 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
-    
+
     setIsLoading(true);
-    
-    const { data, error } = await supabase
-      .from('waitlist')
-      .insert({ name: name.trim(), email: email.trim() })
-      .select('join_number')
-      .single();
-    
+
+    const { data, error } = await supabase.functions.invoke('waitlist-join', {
+      body: { name: name.trim(), email: email.trim() },
+    });
+
     setIsLoading(false);
-    
+
     if (error) {
-      if (error.code === '23505') {
-        toast.error('This email is already on the waitlist!');
-      } else {
-        toast.error('Something went wrong. Please try again.');
-      }
+      toast.error('Something went wrong. Please try again.');
       return;
     }
-    
-    setJoinNumber(data.join_number);
+
+    if (!data?.success) {
+      toast.error(data?.error || 'Something went wrong. Please try again.');
+      return;
+    }
+
+    setJoinNumber(data?.joinNumber ?? null);
     setIsSubmitted(true);
     triggerConfetti();
   };

@@ -226,26 +226,26 @@ const LandingPage = () => {
               onSubmit={async (e) => {
                 e.preventDefault();
                 if (!ctaEmail.trim()) return;
-                
+
                 setCtaLoading(true);
-                const { data, error } = await supabase
-                  .from('waitlist')
-                  .insert({ name: 'Waitlist Signup', email: ctaEmail.trim() })
-                  .select('join_number')
-                  .single();
+                const { data, error } = await supabase.functions.invoke('waitlist-join', {
+                  body: { name: 'Website Waitlist', email: ctaEmail.trim() },
+                });
                 setCtaLoading(false);
-                
+
                 if (error) {
-                  if (error.code === '23505') {
-                    toast.error("This email is already on the waitlist!");
-                  } else {
-                    toast.error("Something went wrong. Please try again.");
-                  }
+                  toast.error('Something went wrong. Please try again.');
                   return;
                 }
-                
-                toast.success(`You're #${data.join_number} on the waitlist!`, {
-                  description: "We'll notify you when Sidechat launches."
+
+                if (!data?.success) {
+                  toast.error(data?.error || 'Something went wrong. Please try again.');
+                  return;
+                }
+
+                const numberText = data?.joinNumber ? `You're #${data.joinNumber} on the waitlist!` : "You've joined the waitlist!";
+                toast.success(numberText, {
+                  description: "We'll notify you when Sidechat launches.",
                 });
                 setCtaEmail('');
               }}
