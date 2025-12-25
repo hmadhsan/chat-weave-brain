@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import AppPage from "./pages/App";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/app/ProtectedRoute";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/invite/:token" element={<AcceptInvite />} />
             <Route
               path="/app"
               element={

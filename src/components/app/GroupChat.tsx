@@ -1,11 +1,12 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/threadly';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
+import InviteMemberModal from './InviteMemberModal';
 
 interface GroupChatProps {
   group: Group;
@@ -15,6 +16,7 @@ interface GroupChatProps {
   onSendMessage: (content: string) => void;
   onStartThread: () => void;
   activeThread?: PrivateThread | null;
+  groupId?: string;
 }
 
 const GroupChat = ({
@@ -25,8 +27,10 @@ const GroupChat = ({
   onSendMessage,
   onStartThread,
   activeThread,
+  groupId,
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,11 +71,21 @@ const GroupChat = ({
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setIsInviteModalOpen(true)}
+            className="gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Invite
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onStartThread}
             className="gap-2"
           >
             <MessageSquarePlus className="w-4 h-4" />
-            Start Private Thread
+            Private Thread
           </Button>
 
           <Button variant="ghost" size="icon">
@@ -128,6 +142,16 @@ const GroupChat = ({
         onSend={onSendMessage}
         placeholder={`Message ${group.name}...`}
       />
+
+      {/* Invite Modal */}
+      {groupId && (
+        <InviteMemberModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          groupId={groupId}
+          groupName={group.name}
+        />
+      )}
     </div>
   );
 };
