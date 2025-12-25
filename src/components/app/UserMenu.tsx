@@ -10,13 +10,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, Settings, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const UserMenu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignOut = async () => {
@@ -39,27 +39,26 @@ const UserMenu = () => {
     }
   };
 
-  const initials = user?.user_metadata?.full_name
-    ? user.user_metadata.full_name
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    : user?.email?.[0]?.toUpperCase() || '?';
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url;
 
-  const displayName = user?.user_metadata?.full_name || user?.email || 'User';
+  const initials = displayName
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-9 w-9 rounded-full bg-primary/10"
+          className="relative h-9 w-9 rounded-full bg-primary/10 overflow-hidden"
         >
-          {user?.user_metadata?.avatar_url ? (
+          {avatarUrl ? (
             <img
-              src={user.user_metadata.avatar_url}
+              src={avatarUrl}
               alt={displayName}
               className="h-9 w-9 rounded-full object-cover"
             />
@@ -78,13 +77,9 @@ const UserMenu = () => {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate('/profile')}>
           <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
+          <span>Profile Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

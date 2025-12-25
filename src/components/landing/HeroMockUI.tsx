@@ -56,13 +56,13 @@ const HeroMockUI = () => {
             <div className="w-3 h-3 rounded-full bg-green-400/60" />
           </div>
           <div className="flex-1 text-center">
-            <span className="text-xs text-muted-foreground font-medium">Threadly — Product Team</span>
+            <span className="text-xs text-muted-foreground font-medium">Sidechat — Product Team</span>
           </div>
         </div>
 
         <div className="flex h-[300px]">
           {/* Sidebar */}
-          <div className="w-16 bg-threadly-navy flex flex-col items-center py-4 gap-3">
+          <div className="w-16 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
               <MessageSquare className="w-5 h-5 text-primary" />
             </div>
@@ -101,11 +101,11 @@ const HeroMockUI = () => {
                     exit={{ opacity: 0, y: -20 }}
                     className="flex gap-2"
                   >
-                    <div className="w-8 h-8 rounded-full bg-threadly-purple flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-sidechat-purple flex items-center justify-center">
                       <Sparkles className="w-4 h-4 text-primary-foreground" />
                     </div>
-                    <div className="flex-1 bg-threadly-purple/10 rounded-lg p-2 border border-threadly-purple/20">
-                      <p className="text-xs font-medium text-threadly-purple">AI Response</p>
+                    <div className="flex-1 bg-sidechat-purple/10 rounded-lg p-2 border border-sidechat-purple/20">
+                      <p className="text-xs font-medium text-sidechat-purple">AI Response</p>
                       <p className="text-sm text-foreground">{aiResponse.content}</p>
                     </div>
                   </motion.div>
@@ -158,7 +158,7 @@ const HeroMockUI = () => {
                     <motion.button
                       initial={{ opacity: 0, scale: 0.9 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="w-full mt-2 px-2 py-1.5 bg-threadly-purple text-primary-foreground text-xs rounded-md flex items-center justify-center gap-1"
+                      className="w-full mt-2 px-2 py-1.5 bg-sidechat-purple text-primary-foreground text-xs rounded-md flex items-center justify-center gap-1"
                     >
                       <Sparkles className="w-3 h-3" />
                       Send to AI

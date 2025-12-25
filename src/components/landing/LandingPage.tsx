@@ -41,10 +41,10 @@ const LandingPage = () => {
             <div className="w-8 h-8 rounded-lg bg-accent-gradient flex items-center justify-center">
               <MessageSquare className="w-4 h-4 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-xl text-foreground">Threadly</span>
+            <span className="font-display font-bold text-xl text-foreground">Sidechat</span>
           </div>
-          <Button variant="hero" size="sm" onClick={() => navigate('/app')}>
-            Try Threadly
+          <Button variant="hero" size="sm" onClick={() => navigate('/auth')}>
+            Get Started
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -61,7 +61,7 @@ const LandingPage = () => {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
                 <Zap className="w-4 h-4" />
-                <span>AI-Powered Team Collaboration</span>
+                <span>Private Brainstorm Threads for Group Chats</span>
               </div>
             </motion.div>
 
@@ -93,8 +93,8 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Button variant="hero" size="xl" onClick={() => navigate('/app')}>
-                Try Threadly
+              <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>
+                Get Started Free
                 <ArrowRight className="w-5 h-5" />
               </Button>
               <Button variant="hero-outline" size="xl">
@@ -128,7 +128,7 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
           >
             <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Why teams love Threadly
+              Why teams love Sidechat
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               The perfect balance between human creativity and AI assistance.
@@ -226,7 +226,7 @@ const LandingPage = () => {
               variant="default"
               size="xl"
               className="bg-card text-foreground hover:bg-card/90"
-              onClick={() => navigate('/app')}
+              onClick={() => navigate('/auth')}
             >
               Get Started Free
               <ArrowRight className="w-5 h-5" />
@@ -234,7 +234,7 @@ const LandingPage = () => {
 
             {/* Decorative */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-threadly-cyan/20 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-sidechat-cyan/20 rounded-full blur-3xl" />
           </motion.div>
         </div>
       </section>
@@ -246,10 +246,10 @@ const LandingPage = () => {
             <div className="w-6 h-6 rounded-md bg-accent-gradient flex items-center justify-center">
               <MessageSquare className="w-3 h-3 text-primary-foreground" />
             </div>
-            <span className="font-display font-semibold text-foreground">Threadly</span>
+            <span className="font-display font-semibold text-foreground">Sidechat</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            © 2024 Threadly. Built with intention.
+            © 2024 Sidechat. Private brainstorms, better outcomes.
           </p>
         </div>
       </footer>

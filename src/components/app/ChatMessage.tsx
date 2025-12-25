@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Message, User } from '@/types/threadly';
+import { Message, User } from '@/types/sidechat';
 import UserAvatar from './UserAvatar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -20,7 +20,7 @@ const ChatMessage = ({ message, user, isOwn }: ChatMessageProps) => {
       transition={{ duration: 0.3 }}
       className={cn(
         "flex gap-3 px-4 py-2 group hover:bg-secondary/30 transition-colors",
-        isAI && "bg-threadly-purple/5"
+        isAI && "bg-sidechat-purple/5"
       )}
     >
       <UserAvatar user={user} isAI={isAI} showStatus />
@@ -29,7 +29,7 @@ const ChatMessage = ({ message, user, isOwn }: ChatMessageProps) => {
         <div className="flex items-baseline gap-2">
           <span className={cn(
             "font-medium text-sm",
-            isAI ? "text-threadly-purple" : "text-foreground"
+            isAI ? "text-sidechat-purple" : "text-foreground"
           )}>
             {isAI ? 'AI Assistant' : user?.name || 'Unknown'}
           </span>
@@ -37,7 +37,7 @@ const ChatMessage = ({ message, user, isOwn }: ChatMessageProps) => {
             {format(message.createdAt, 'h:mm a')}
           </span>
           {isAI && (
-            <span className="text-xs bg-threadly-purple/20 text-threadly-purple px-2 py-0.5 rounded-full">
+            <span className="text-xs bg-sidechat-purple/20 text-sidechat-purple px-2 py-0.5 rounded-full">
               AI Response
             </span>
           )}

@@ -83,7 +83,7 @@ const Auth = () => {
         } else {
           toast({
             title: 'Account created!',
-            description: 'Welcome to Threadly!',
+            description: 'Welcome to Sidechat!',
           });
           navigate('/app');
         }
@@ -142,17 +142,17 @@ const Auth = () => {
               <MessageSquare className="w-8 h-8 text-primary-foreground" />
             </div>
             <h1 className="font-display text-4xl font-bold text-primary-foreground mb-4">
-              Threadly
+              Sidechat
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-md">
-              Private brainstorm threads for group AI chats. Collaborate smarter with your team.
+              Private brainstorm threads for group chats. Collaborate smarter with your team.
             </p>
           </motion.div>
         </div>
         
         {/* Decorative elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-threadly-cyan/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-sidechat-cyan/20 rounded-full blur-3xl" />
       </div>
 
       {/* Right Panel - Auth Form */}
@@ -178,7 +178,7 @@ const Auth = () => {
             <div className="w-10 h-10 rounded-xl bg-accent-gradient flex items-center justify-center">
               <MessageSquare className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-display font-bold text-2xl text-foreground">Threadly</span>
+            <span className="font-display font-bold text-2xl text-foreground">Sidechat</span>
           </div>
 
           <div className="mb-8">
@@ -188,7 +188,7 @@ const Auth = () => {
             <p className="text-muted-foreground">
               {isSignUp
                 ? 'Start collaborating with your team today'
-                : 'Sign in to continue to Threadly'}
+                : 'Sign in to continue to Sidechat'}
             </p>
           </div>
 
