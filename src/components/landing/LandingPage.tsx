@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Lock, Users, Sparkles, Zap, Quote } from 'lucide-react';
+import { ArrowRight, Lock, Users, Sparkles, Zap } from 'lucide-react';
 import HeroMockUI from './HeroMockUI';
 import SidechatLogo from '@/components/SidechatLogo';
 import WaitlistModal from './WaitlistModal';
@@ -38,26 +38,6 @@ const LandingPage = () => {
     { number: '04', title: 'Send to AI', description: 'Get AI insights back in the main chat' },
   ];
 
-  const testimonials = [
-    {
-      quote: "Sidechat completely changed how our design team collaborates. We can brainstorm freely without worrying about half-baked ideas being analyzed by AI.",
-      name: "Sarah Chen",
-      role: "Design Lead at Figma",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      quote: "The private thread feature is genius. We hash out our thoughts first, then get AI insights when we're ready. It's like having the best of both worlds.",
-      name: "Marcus Johnson",
-      role: "Product Manager at Stripe",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face"
-    },
-    {
-      quote: "Finally, an AI chat tool that respects the creative process. Our team's productivity has skyrocketed since switching to Sidechat.",
-      name: "Emily Rodriguez",
-      role: "Engineering Manager at Notion",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face"
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -219,62 +199,6 @@ const LandingPage = () => {
                 {index < steps.length - 1 && (
                   <div className="hidden md:block absolute top-8 right-0 w-full h-px bg-gradient-to-r from-primary/20 to-transparent" />
                 )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-20 px-6 bg-secondary/30">
-        <div className="container mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Loved by teams everywhere
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              See what teams are saying about Sidechat.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                className="relative bg-card rounded-2xl p-8 shadow-sm border border-border hover:shadow-lg transition-all duration-300 group"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                {/* Quote icon */}
-                <div className="absolute -top-3 -left-3 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Quote className="w-5 h-5 text-primary" />
-                </div>
-                
-                {/* Quote text */}
-                <p className="text-foreground/90 leading-relaxed mb-6 mt-2">
-                  "{testimonial.quote}"
-                </p>
-                
-                {/* Author */}
-                <div className="flex items-center gap-3">
-                  <img 
-                    src={testimonial.avatar} 
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
-                  />
-                  <div>
-                    <p className="font-medium text-foreground">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
-                  </div>
-                </div>
               </motion.div>
             ))}
           </div>
