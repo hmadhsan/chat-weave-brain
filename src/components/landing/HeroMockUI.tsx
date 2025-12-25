@@ -2,12 +2,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { MessageSquare, Users, Sparkles, Send, Lock } from 'lucide-react';
 
-// Team members with distinct colors (4 members)
+// Team members with distinct colors and avatar images
 const teamMembers = [
-  { name: 'Sarah', color: 'hsl(var(--primary))' },
-  { name: 'Alex', color: 'hsl(262 80% 60%)' },
-  { name: 'Jordan', color: 'hsl(190 70% 50%)' },
-  { name: 'Emma', color: 'hsl(340 70% 55%)' },
+  { name: 'Sarah', color: 'hsl(var(--primary))', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face' },
+  { name: 'Alex', color: 'hsl(262 80% 60%)', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
+  { name: 'Jordan', color: 'hsl(190 70% 50%)', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' },
+  { name: 'Emma', color: 'hsl(340 70% 55%)', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face' },
 ];
 
 // Animation phases with longer durations
@@ -154,15 +154,19 @@ const HeroMockUI = () => {
             {teamMembers.map((member, i) => (
               <motion.div
                 key={member.name}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-card"
-                style={{ backgroundColor: member.color, zIndex: 4 - i }}
+                className="w-6 h-6 rounded-full overflow-hidden border-2 border-card"
+                style={{ zIndex: 4 - i }}
                 animate={{
                   opacity: highlightPrivateMembers && !['Sarah', 'Alex'].includes(member.name) ? 0.4 : 1,
                   scale: highlightPrivateMembers && ['Sarah', 'Alex'].includes(member.name) ? 1.1 : 1,
                 }}
                 transition={{ duration: 0.4 }}
               >
-                {member.name[0]}
+                <img 
+                  src={member.avatar} 
+                  alt={member.name}
+                  className="w-full h-full object-cover"
+                />
               </motion.div>
             ))}
           </div>
@@ -226,8 +230,7 @@ const HeroMockUI = () => {
                     className="flex gap-2"
                   >
                     <motion.div 
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                      style={{ backgroundColor: member?.color }}
+                      className="w-8 h-8 rounded-full overflow-hidden shrink-0"
                       animate={{
                         scale: highlightPrivateMembers && isPrivateMember ? [1, 1.1, 1] : 1,
                         boxShadow: highlightPrivateMembers && isPrivateMember 
@@ -236,7 +239,11 @@ const HeroMockUI = () => {
                       }}
                       transition={{ duration: 0.6, repeat: highlightPrivateMembers && isPrivateMember ? Infinity : 0 }}
                     >
-                      {msg.user[0]}
+                      <img 
+                        src={member?.avatar} 
+                        alt={msg.user}
+                        className="w-full h-full object-cover"
+                      />
                     </motion.div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground">{msg.user}</p>
@@ -329,10 +336,13 @@ const HeroMockUI = () => {
                       return (
                         <div
                           key={name}
-                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                          style={{ backgroundColor: member?.color }}
+                          className="w-5 h-5 rounded-full overflow-hidden"
                         >
-                          {name[0]}
+                          <img 
+                            src={member?.avatar} 
+                            alt={name}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       );
                     })}
@@ -351,11 +361,12 @@ const HeroMockUI = () => {
                         transition={{ duration: 0.3 }}
                         className="flex gap-2"
                       >
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0"
-                          style={{ backgroundColor: member?.color }}
-                        >
-                          {msg.user[0]}
+                        <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
+                          <img 
+                            src={member?.avatar} 
+                            alt={msg.user}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] font-medium text-foreground">{msg.user}</p>
