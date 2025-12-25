@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, Lock, Users, Sparkles, Zap } from 'lucide-react';
@@ -8,11 +7,12 @@ import HeroMockUI from './HeroMockUI';
 import SidechatLogo from '@/components/SidechatLogo';
 import WaitlistModal from './WaitlistModal';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const LandingPage = () => {
-  const navigate = useNavigate();
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
   const [ctaEmail, setCtaEmail] = useState('');
+  const [ctaLoading, setCtaLoading] = useState(false);
   const features = [
     {
       icon: Users,
@@ -44,8 +44,8 @@ const LandingPage = () => {
       <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <SidechatLogo size="sm" />
-          <Button variant="hero" size="sm" onClick={() => navigate('/auth')}>
-            Get Started
+          <Button variant="hero" size="sm" onClick={() => setIsWaitlistOpen(true)}>
+            Join Waitlist
             <ArrowRight className="w-4 h-4" />
           </Button>
         </div>
@@ -226,14 +226,31 @@ const LandingPage = () => {
             
             {/* Inline waitlist form */}
             <form 
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                if (ctaEmail.trim()) {
-                  toast.success("You've joined our waitlist!", {
-                    description: "We'll notify you when Sidechat launches."
-                  });
-                  setCtaEmail('');
+                if (!ctaEmail.trim()) return;
+                
+                setCtaLoading(true);
+                const { data, error } = await supabase
+                  .from('waitlist')
+                  .insert({ name: 'Waitlist Signup', email: ctaEmail.trim() })
+                  .select('join_number')
+                  .single();
+                setCtaLoading(false);
+                
+                if (error) {
+                  if (error.code === '23505') {
+                    toast.error("This email is already on the waitlist!");
+                  } else {
+                    toast.error("Something went wrong. Please try again.");
+                  }
+                  return;
                 }
+                
+                toast.success(`You're #${data.join_number} on the waitlist!`, {
+                  description: "We'll notify you when Sidechat launches."
+                });
+                setCtaEmail('');
               }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
             >
@@ -249,8 +266,9 @@ const LandingPage = () => {
                 type="submit"
                 size="lg"
                 className="bg-card text-foreground hover:bg-card/90 h-12 px-6 whitespace-nowrap"
+                disabled={ctaLoading}
               >
-                Join Waitlist
+                {ctaLoading ? 'Joining...' : 'Join Waitlist'}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </form>
