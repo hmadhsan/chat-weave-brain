@@ -203,11 +203,6 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
                       <h2 className="font-display text-2xl font-bold text-foreground mb-2">
                         You're on the list!
                       </h2>
-                      {joinNumber && (
-                        <p className="text-primary font-semibold text-lg mb-2">
-                          You're #{joinNumber} on the waitlist
-                        </p>
-                      )}
                       <p className="text-muted-foreground mb-6">
                         Thanks for joining, {name.split(' ')[0]}! We'll notify you when Sidechat launches.
                       </p>
