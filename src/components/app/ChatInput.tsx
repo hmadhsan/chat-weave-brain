@@ -2,6 +2,11 @@ import { useState, KeyboardEvent } from 'react';
 import { Send, Smile } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface ChatInputProps {
   onSend: (content: string) => void;
@@ -9,8 +14,20 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
+const EMOJI_LIST = [
+  '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊',
+  '😇', '🙂', '😉', '😍', '🥰', '😘', '😋', '😎',
+  '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣',
+  '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '🤤',
+  '👍', '👎', '👏', '🙌', '🤝', '💪', '✌️', '🤞',
+  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '💯',
+  '🎉', '🎊', '🔥', '⭐', '✨', '💡', '💬', '👀',
+  '✅', '❌', '⚡', '🚀', '💻', '📱', '🎯', '📈',
+];
+
 const ChatInput = ({ onSend, placeholder = 'Type a message...', disabled }: ChatInputProps) => {
   const [content, setContent] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
 
   const handleSend = () => {
     if (content.trim() && !disabled) {
@@ -26,12 +43,39 @@ const ChatInput = ({ onSend, placeholder = 'Type a message...', disabled }: Chat
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setContent((prev) => prev + emoji);
+    setEmojiOpen(false);
+  };
+
   return (
     <div className="p-4 border-t border-border bg-card/50">
       <div className="flex items-end gap-2 bg-secondary/50 rounded-xl p-2">
-        <Button variant="ghost" size="icon" className="shrink-0">
-          <Smile className="w-5 h-5 text-muted-foreground" />
-        </Button>
+        <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="shrink-0">
+              <Smile className="w-5 h-5 text-muted-foreground" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent 
+            className="w-72 p-2" 
+            align="start" 
+            side="top"
+            sideOffset={8}
+          >
+            <div className="grid grid-cols-8 gap-1">
+              {EMOJI_LIST.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleEmojiSelect(emoji)}
+                  className="w-8 h-8 flex items-center justify-center text-lg hover:bg-secondary rounded-md transition-colors"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
         
         <textarea
           value={content}
