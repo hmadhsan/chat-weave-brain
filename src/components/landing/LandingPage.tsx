@@ -1,13 +1,18 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ArrowRight, Lock, Users, Sparkles, Zap } from 'lucide-react';
 import HeroMockUI from './HeroMockUI';
 import SidechatLogo from '@/components/SidechatLogo';
+import WaitlistModal from './WaitlistModal';
+import { toast } from 'sonner';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
+  const [ctaEmail, setCtaEmail] = useState('');
   const features = [
     {
       icon: Users,
@@ -89,8 +94,8 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Button variant="hero" size="xl" onClick={() => navigate('/auth')}>
-                Get Started Free
+              <Button variant="hero" size="xl" onClick={() => setIsWaitlistOpen(true)}>
+                Join Waitlist
                 <ArrowRight className="w-5 h-5" />
               </Button>
               <Button variant="hero-outline" size="xl">
@@ -218,15 +223,37 @@ const LandingPage = () => {
             <p className="text-lg text-primary-foreground/80 mb-8 max-w-xl mx-auto">
               Join teams who've discovered the power of intentional AI collaboration.
             </p>
-            <Button
-              variant="default"
-              size="xl"
-              className="bg-card text-foreground hover:bg-card/90"
-              onClick={() => navigate('/auth')}
+            
+            {/* Inline waitlist form */}
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (ctaEmail.trim()) {
+                  toast.success("You've joined our waitlist!", {
+                    description: "We'll notify you when Sidechat launches."
+                  });
+                  setCtaEmail('');
+                }
+              }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
             >
-              Get Started Free
-              <ArrowRight className="w-5 h-5" />
-            </Button>
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                value={ctaEmail}
+                onChange={(e) => setCtaEmail(e.target.value)}
+                className="h-12 bg-card/90 border-card text-foreground placeholder:text-muted-foreground flex-1"
+                required
+              />
+              <Button
+                type="submit"
+                size="lg"
+                className="bg-card text-foreground hover:bg-card/90 h-12 px-6 whitespace-nowrap"
+              >
+                Join Waitlist
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </form>
 
             {/* Decorative */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl" />
@@ -240,10 +267,13 @@ const LandingPage = () => {
         <div className="container mx-auto flex items-center justify-between">
           <SidechatLogo size="xs" />
           <p className="text-sm text-muted-foreground">
-            © 2024 Sidechat. Private brainstorms, better outcomes.
+            © 2025 Sidechat. Private brainstorms, better outcomes.
           </p>
         </div>
       </footer>
+
+      {/* Waitlist Modal */}
+      <WaitlistModal isOpen={isWaitlistOpen} onClose={() => setIsWaitlistOpen(false)} />
     </div>
   );
 };
