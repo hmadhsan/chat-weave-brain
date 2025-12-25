@@ -56,16 +56,16 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
         throw error;
       }
 
-      // Generate the invite link - use production URL to avoid preview access issues
-      const currentOrigin = window.location.origin;
-      // Use production URL if we're on a preview/sandbox domain
-      const isPreview = currentOrigin.includes('lovableproject.com') || 
-                        currentOrigin.includes('localhost') || 
-                        currentOrigin.includes('127.0.0.1') ||
-                        currentOrigin.includes('webcontainer');
-      const appUrl = isPreview 
-        ? 'https://chat-weave-brain.lovable.app' 
-        : currentOrigin;
+      // Generate the invite link - always use the published URL when running in a preview environment
+      const host = window.location.hostname;
+      const isPreview =
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        host.startsWith('id-preview--') ||
+        host.startsWith('preview--') ||
+        (host.endsWith('.lovable.app') && host.includes('--'));
+
+      const appUrl = isPreview ? 'https://chat-weave-brain.lovable.app' : window.location.origin;
       const link = `${appUrl}/invite/${invitation.token}`;
       setInviteLink(link);
 
