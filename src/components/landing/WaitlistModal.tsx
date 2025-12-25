@@ -49,23 +49,24 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
 
     setIsLoading(true);
 
-    const { data, error } = await supabase.functions.invoke('waitlist-join', {
-      body: { name: name.trim(), email: email.trim() },
+    const { data, error } = await supabase.rpc('join_waitlist', {
+      _name: name.trim(),
+      _email: email.trim(),
     });
 
     setIsLoading(false);
 
     if (error) {
-      toast.error('Something went wrong. Please try again.');
+      toast.error(error.message || 'Something went wrong. Please try again.');
       return;
     }
 
-    if (!data?.success) {
-      toast.error(data?.error || 'Something went wrong. Please try again.');
-      return;
+    const row = data?.[0];
+    if (row?.already_joined) {
+      toast.info('This email is already on the waitlist!');
     }
 
-    setJoinNumber(data?.joinNumber ?? null);
+    setJoinNumber(row?.join_number ?? null);
     setIsSubmitted(true);
     triggerConfetti();
   };
