@@ -172,7 +172,7 @@ const HeroMockUI = () => {
           </div>
         </div>
 
-        <div className="flex h-[420px]">
+        <div className="flex h-[480px]">
           {/* Sidebar */}
           <div className="w-14 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
             <div className="w-9 h-9 rounded-xl bg-accent-gradient flex items-center justify-center">
