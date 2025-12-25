@@ -17,7 +17,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         hero: "bg-accent-gradient text-primary-foreground font-semibold shadow-lg hover:shadow-glow hover:scale-[1.02] active:scale-[0.98]",
         "hero-outline": "border-2 border-primary/20 bg-card/50 backdrop-blur-sm text-foreground hover:bg-card hover:border-primary/40",
-        ai: "bg-threadly-purple text-primary-foreground hover:bg-threadly-purple/90 shadow-sm",
+        ai: "bg-sidechat-purple text-primary-foreground hover:bg-sidechat-purple/90 shadow-sm",
         subtle: "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground",
       },
       size: {

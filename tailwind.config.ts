@@ -61,13 +61,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        threadly: {
-          navy: "hsl(var(--threadly-navy))",
-          slate: "hsl(var(--threadly-slate))",
-          teal: "hsl(var(--threadly-teal))",
-          "teal-light": "hsl(var(--threadly-teal-light))",
-          cyan: "hsl(var(--threadly-cyan))",
-          purple: "hsl(var(--threadly-purple))",
+        sidechat: {
+          navy: "hsl(var(--sidechat-navy))",
+          slate: "hsl(var(--sidechat-slate))",
+          teal: "hsl(var(--sidechat-teal))",
+          "teal-light": "hsl(var(--sidechat-teal-light))",
+          cyan: "hsl(var(--sidechat-cyan))",
+          purple: "hsl(var(--sidechat-purple))",
         },
       },
       borderRadius: {
