@@ -4,6 +4,8 @@ import { X, Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface WaitlistModalProps {
   isOpen: boolean;
@@ -15,15 +17,32 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [joinNumber, setJoinNumber] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
     
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const { data, error } = await supabase
+      .from('waitlist')
+      .insert({ name: name.trim(), email: email.trim() })
+      .select('join_number')
+      .single();
+    
     setIsLoading(false);
+    
+    if (error) {
+      if (error.code === '23505') {
+        toast.error('This email is already on the waitlist!');
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
+      return;
+    }
+    
+    setJoinNumber(data.join_number);
     setIsSubmitted(true);
   };
 
@@ -34,6 +53,7 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
       setName('');
       setEmail('');
       setIsSubmitted(false);
+      setJoinNumber(null);
     }, 300);
   };
 
@@ -159,8 +179,13 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
                       <h2 className="font-display text-2xl font-bold text-foreground mb-2">
                         You're on the list!
                       </h2>
+                      {joinNumber && (
+                        <p className="text-primary font-semibold text-lg mb-2">
+                          You're #{joinNumber} on the waitlist
+                        </p>
+                      )}
                       <p className="text-muted-foreground mb-6">
-                        Thanks for joining our waitlist, {name.split(' ')[0]}! We'll notify you when Sidechat launches.
+                        Thanks for joining, {name.split(' ')[0]}! We'll notify you when Sidechat launches.
                       </p>
                       <Button variant="outline" onClick={handleClose}>
                         Close
