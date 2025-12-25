@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
 import { Group } from '@/types/sidechat';
 import { cn } from '@/lib/utils';
-import { Hash, Plus, MessageSquare } from 'lucide-react';
+import { Hash, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserMenu from './UserMenu';
+import SidechatLogo from '@/components/SidechatLogo';
 
 interface GroupSidebarProps {
   groups: Group[];
@@ -17,12 +18,7 @@ const GroupSidebar = ({ groups, activeGroupId, onSelectGroup, onCreateGroup }: G
     <div className="w-64 h-full bg-card border-r border-border flex flex-col">
       {/* Header with Logo */}
       <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-accent-gradient flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-primary-foreground" />
-          </div>
-          <span className="font-display font-bold text-foreground">Sidechat</span>
-        </div>
+        <SidechatLogo size="sm" className="mb-4" />
         <div className="flex items-center justify-between">
           <h2 className="font-display font-semibold text-foreground text-sm">Groups</h2>
           <Button variant="ghost" size="icon" onClick={onCreateGroup}>

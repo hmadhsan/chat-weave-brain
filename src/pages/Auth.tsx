@@ -6,7 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { MessageSquare, Mail, Lock, User, Loader2, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, User, Loader2, ArrowLeft } from 'lucide-react';
+import SidechatLogo from '@/components/SidechatLogo';
 
 const emailSchema = z.string().email('Please enter a valid email');
 const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
@@ -138,12 +139,7 @@ const Auth = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="w-16 h-16 rounded-2xl bg-primary/20 flex items-center justify-center mb-6 mx-auto">
-              <MessageSquare className="w-8 h-8 text-primary-foreground" />
-            </div>
-            <h1 className="font-display text-4xl font-bold text-primary-foreground mb-4">
-              Sidechat
-            </h1>
+            <SidechatLogo size="xl" textClassName="text-primary-foreground" />
             <p className="text-lg text-primary-foreground/80 max-w-md">
               Private brainstorm threads for group chats. Collaborate smarter with your team.
             </p>
@@ -173,12 +169,8 @@ const Auth = () => {
             Back to home
           </Button>
 
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-accent-gradient flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="font-display font-bold text-2xl text-foreground">Sidechat</span>
+          <div className="lg:hidden mb-8">
+            <SidechatLogo size="md" />
           </div>
 
           <div className="mb-8">

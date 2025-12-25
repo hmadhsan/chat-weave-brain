@@ -1,8 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
 import { Message, PrivateThread, ThreadMessage, User, Group } from '@/types/sidechat';
-import { mockGroups, mockMessages, mockUsers, currentUser } from '@/data/mockData';
+import { mockGroups, mockMessages, mockUsers } from '@/data/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
@@ -13,7 +15,29 @@ import { useToast } from '@/hooks/use-toast';
 
 const AppShell = () => {
   const { toast } = useToast();
-  const [groups, setGroups] = useState<Group[]>(mockGroups);
+  const { user, profile } = useAuth();
+  
+  // Create a User object from the authenticated user
+  const currentUser: User = useMemo(() => ({
+    id: user?.id || 'unknown',
+    name: profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'You',
+    email: user?.email || profile?.email || '',
+    avatar: profile?.avatar_url || user?.user_metadata?.avatar_url || undefined,
+    status: 'online' as const,
+  }), [user, profile]);
+
+  // Merge current user with mock users for display purposes
+  const allUsers = useMemo(() => {
+    const filtered = mockUsers.filter(u => u.id !== currentUser.id);
+    return [currentUser, ...filtered];
+  }, [currentUser]);
+
+  const [groups, setGroups] = useState<Group[]>(() => 
+    mockGroups.map(g => ({
+      ...g,
+      members: g.members.map(m => m.id === 'user-1' ? currentUser : m)
+    }))
+  );
   const [activeGroupId, setActiveGroupId] = useState<string | null>(mockGroups[0]?.id || null);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [threads, setThreads] = useState<PrivateThread[]>([]);
@@ -44,7 +68,7 @@ const AppShell = () => {
     };
 
     setMessages((prev) => [...prev, newMessage]);
-  }, [activeGroupId]);
+  }, [activeGroupId, currentUser.id]);
 
   const handleCreateThread = (name: string, members: User[]) => {
     if (!activeGroupId) return;
@@ -96,42 +120,69 @@ const AppShell = () => {
     };
 
     setThreadMessages((prev) => [...prev, newMessage]);
-  }, [activeThread]);
+  }, [activeThread, currentUser.id]);
 
   const handleSendToAI = async () => {
     if (!activeThread || !activeGroupId || currentThreadMessages.length === 0) return;
 
     setIsSendingToAI(true);
 
-    // Simulate AI processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      // Build thread context with actual user names
+      const threadContext = currentThreadMessages.map((m) => {
+        const msgUser = allUsers.find((u) => u.id === m.userId);
+        return `${msgUser?.name || 'Unknown'}: ${m.content}`;
+      }).join('\n');
 
-    // Create AI response based on thread messages
-    const threadContext = currentThreadMessages.map((m) => {
-      const user = mockUsers.find((u) => u.id === m.userId);
-      return `${user?.name || 'Unknown'}: ${m.content}`;
-    }).join('\n');
+      // Call the real AI edge function
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: { 
+          threadContext,
+          threadName: activeThread.name
+        }
+      });
 
-    const aiContent = generateAIResponse(threadContext);
+      if (error) {
+        console.error('AI function error:', error);
+        throw new Error(error.message || 'Failed to get AI response');
+      }
 
-    const aiMessage: Message = {
-      id: uuidv4(),
-      groupId: activeGroupId,
-      userId: 'ai',
-      content: aiContent,
-      createdAt: new Date(),
-      isAI: true,
-      threadId: activeThread.id,
-    };
+      if (data?.error) {
+        throw new Error(data.error);
+      }
 
-    setMessages((prev) => [...prev, aiMessage]);
-    setIsSendingToAI(false);
-    setActiveThread(null);
+      const aiContent = data?.content;
+      if (!aiContent) {
+        throw new Error('No response from AI');
+      }
 
-    toast({
-      title: 'AI response posted',
-      description: 'The AI has analyzed your discussion and shared insights in the main chat.',
-    });
+      const aiMessage: Message = {
+        id: uuidv4(),
+        groupId: activeGroupId,
+        userId: 'ai',
+        content: aiContent,
+        createdAt: new Date(),
+        isAI: true,
+        threadId: activeThread.id,
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+      setActiveThread(null);
+
+      toast({
+        title: 'AI response posted',
+        description: 'The AI has analyzed your discussion and shared insights in the main chat.',
+      });
+    } catch (error) {
+      console.error('Error calling AI:', error);
+      toast({
+        title: 'AI request failed',
+        description: error instanceof Error ? error.message : 'Failed to get AI response. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingToAI(false);
+    }
   };
 
   const handleCloseThread = () => {
@@ -166,7 +217,7 @@ const AppShell = () => {
           isOpen={isGroupModalOpen}
           onClose={() => setIsGroupModalOpen(false)}
           onCreate={handleCreateGroup}
-          availableMembers={mockUsers}
+          availableMembers={allUsers}
           currentUser={currentUser}
         />
       </div>
@@ -187,7 +238,7 @@ const AppShell = () => {
       <GroupChat
         group={activeGroup}
         messages={groupMessages}
-        users={mockUsers}
+        users={allUsers}
         currentUserId={currentUser.id}
         onSendMessage={handleSendMessage}
         onStartThread={() => setIsThreadModalOpen(true)}
@@ -200,7 +251,7 @@ const AppShell = () => {
           <PrivateThreadPanel
             thread={activeThread}
             messages={currentThreadMessages}
-            users={mockUsers}
+            users={allUsers}
             currentUserId={currentUser.id}
             onClose={handleCloseThread}
             onSendMessage={handleSendThreadMessage}
@@ -224,24 +275,11 @@ const AppShell = () => {
         isOpen={isGroupModalOpen}
         onClose={() => setIsGroupModalOpen(false)}
         onCreate={handleCreateGroup}
-        availableMembers={mockUsers}
+        availableMembers={allUsers}
         currentUser={currentUser}
       />
     </div>
   );
 };
-
-// Simple AI response generator (mock)
-function generateAIResponse(context: string): string {
-  const responses = [
-    `Based on your team discussion, I've identified several key themes:\n\n**Main Points:**\n• The team is focused on improving user experience\n• There's interest in streamlining the onboarding flow\n• Collaboration features are a priority\n\n**Recommendations:**\n1. Start with user research to validate assumptions\n2. Create a prototype for testing\n3. Iterate based on feedback\n\nWould you like me to elaborate on any of these points?`,
-    
-    `After analyzing your brainstorm session, here's a summary:\n\n**Key Insights:**\n• Multiple perspectives on the core problem\n• Strong alignment on user-centric approach\n• Need for data-driven decisions\n\n**Next Steps:**\n1. Define success metrics\n2. Assign ownership for each initiative\n3. Set up regular check-ins\n\nThis discussion shows great team alignment!`,
-    
-    `I've reviewed your private discussion and synthesized the key takeaways:\n\n**Themes Identified:**\n• Innovation in user engagement\n• Technical feasibility considerations\n• Timeline and resource planning\n\n**Suggested Actions:**\n1. Prioritize quick wins first\n2. Build a roadmap for larger initiatives\n3. Schedule a follow-up to track progress\n\nGreat brainstorming session!`,
-  ];
-
-  return responses[Math.floor(Math.random() * responses.length)];
-}
 
 export default AppShell;
