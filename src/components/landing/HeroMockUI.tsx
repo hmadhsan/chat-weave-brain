@@ -110,7 +110,8 @@ const HeroMockUI = () => {
   }, [phase, visibleMessages, privateMessages, groupMessages.length, threadMessages.length]);
 
   const showPrivatePanel = phase !== 'groupChat' && phase !== 'reset';
-  const highlightPrivateMembers = phase !== 'groupChat' && phase !== 'reset';
+  const highlightPrivateMembers = ['transition', 'privateChat', 'sendToAI'].includes(phase);
+  const focusOnAIResponse = phase === 'aiResponse';
 
   return (
     <div className="relative w-full max-w-3xl mx-auto">
@@ -193,8 +194,8 @@ const HeroMockUI = () => {
           <motion.div 
             className="flex-1 flex flex-col bg-background relative"
             animate={{ 
-              opacity: showPrivatePanel ? 0.6 : 1,
-              filter: showPrivatePanel ? 'blur(1px)' : 'blur(0px)'
+              opacity: showPrivatePanel && !focusOnAIResponse ? 0.6 : 1,
+              filter: showPrivatePanel && !focusOnAIResponse ? 'blur(1px)' : 'blur(0px)'
             }}
             transition={{ duration: 0.4 }}
           >
@@ -289,7 +290,11 @@ const HeroMockUI = () => {
             {showPrivatePanel && (
               <motion.div
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 220, opacity: 1 }}
+                animate={{ 
+                  width: 220, 
+                  opacity: focusOnAIResponse ? 0.5 : 1,
+                  filter: focusOnAIResponse ? 'blur(0.5px)' : 'blur(0px)'
+                }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.4, ease: 'easeInOut' }}
                 className="border-l border-primary/30 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden"
