@@ -171,8 +171,12 @@ const HeroMockUI = () => {
         <div className="flex h-[420px]">
           {/* Sidebar */}
           <div className="w-14 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-primary" />
+            <div className="w-9 h-9 rounded-xl bg-accent-gradient flex items-center justify-center">
+              {/* Mini Sidechat logo icon */}
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 4H10C8.9 4 8 4.9 8 6V12C8 13.1 8.9 14 10 14H14L17 17V14H18C19.1 14 20 13.1 20 12V6C20 4.9 19.1 4 18 4Z" fill="currentColor" className="text-primary-foreground/60" />
+                <path d="M14 8H6C4.9 8 4 8.9 4 10V16C4 17.1 4.9 18 6 18H7V21L10 18H14C15.1 18 16 17.1 16 16V10C16 8.9 15.1 8 14 8Z" fill="currentColor" className="text-primary-foreground" />
+              </svg>
             </div>
             <motion.div 
               className="w-9 h-9 rounded-xl flex items-center justify-center"
