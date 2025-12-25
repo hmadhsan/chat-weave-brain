@@ -1,24 +1,26 @@
 import { useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
-import { Message, PrivateThread, ThreadMessage, User } from '@/types/threadly';
+import { Message, PrivateThread, ThreadMessage, User, Group } from '@/types/sidechat';
 import { mockGroups, mockMessages, mockUsers, currentUser } from '@/data/mockData';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
 import CreateThreadModal from './CreateThreadModal';
+import CreateGroupModal from './CreateGroupModal';
 import { MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const AppShell = () => {
   const { toast } = useToast();
-  const [groups] = useState(mockGroups);
+  const [groups, setGroups] = useState<Group[]>(mockGroups);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(mockGroups[0]?.id || null);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [threads, setThreads] = useState<PrivateThread[]>([]);
   const [activeThread, setActiveThread] = useState<PrivateThread | null>(null);
   const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>([]);
   const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isSendingToAI, setIsSendingToAI] = useState(false);
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
@@ -62,6 +64,23 @@ const AppShell = () => {
     toast({
       title: 'Private thread created',
       description: `"${name}" is now active. Start brainstorming!`,
+    });
+  };
+
+  const handleCreateGroup = (name: string, members: User[]) => {
+    const newGroup: Group = {
+      id: uuidv4(),
+      name,
+      members,
+      createdAt: new Date(),
+    };
+
+    setGroups((prev) => [...prev, newGroup]);
+    setActiveGroupId(newGroup.id);
+    
+    toast({
+      title: 'Group created',
+      description: `"${name}" has been created with ${members.length} member${members.length > 1 ? 's' : ''}.`,
     });
   };
 
@@ -119,25 +138,37 @@ const AppShell = () => {
     setActiveThread(null);
   };
 
-  const handleCreateGroup = () => {
-    toast({
-      title: 'Coming soon',
-      description: 'Group creation will be available in the next update.',
-    });
-  };
-
   if (!activeGroup) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-            <MessageSquare className="w-8 h-8 text-primary" />
+      <div className="h-screen flex bg-background overflow-hidden">
+        {/* Sidebar */}
+        <GroupSidebar
+          groups={groups}
+          activeGroupId={activeGroupId}
+          onSelectGroup={handleSelectGroup}
+          onCreateGroup={() => setIsGroupModalOpen(true)}
+        />
+        
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="font-display text-xl font-semibold text-foreground mb-2">
+              No groups yet
+            </h2>
+            <p className="text-muted-foreground">Click the + button to create a group</p>
           </div>
-          <h2 className="font-display text-xl font-semibold text-foreground mb-2">
-            No groups yet
-          </h2>
-          <p className="text-muted-foreground">Create a group to start chatting</p>
         </div>
+
+        {/* Create Group Modal */}
+        <CreateGroupModal
+          isOpen={isGroupModalOpen}
+          onClose={() => setIsGroupModalOpen(false)}
+          onCreate={handleCreateGroup}
+          availableMembers={mockUsers}
+          currentUser={currentUser}
+        />
       </div>
     );
   }
@@ -149,7 +180,7 @@ const AppShell = () => {
         groups={groups}
         activeGroupId={activeGroupId}
         onSelectGroup={handleSelectGroup}
-        onCreateGroup={handleCreateGroup}
+        onCreateGroup={() => setIsGroupModalOpen(true)}
       />
 
       {/* Main Chat */}
@@ -185,6 +216,15 @@ const AppShell = () => {
         onClose={() => setIsThreadModalOpen(false)}
         onCreate={handleCreateThread}
         availableMembers={activeGroup.members}
+        currentUser={currentUser}
+      />
+
+      {/* Create Group Modal */}
+      <CreateGroupModal
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        onCreate={handleCreateGroup}
+        availableMembers={mockUsers}
         currentUser={currentUser}
       />
     </div>

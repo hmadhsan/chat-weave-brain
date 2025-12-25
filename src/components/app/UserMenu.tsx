@@ -54,13 +54,13 @@ const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-9 w-9 rounded-full bg-primary/10 overflow-hidden"
+          className="relative h-10 w-10 rounded-full bg-primary/10 overflow-hidden p-0"
         >
           {avatarUrl ? (
             <img
               src={avatarUrl}
               alt={displayName}
-              className="h-9 w-9 rounded-full object-cover"
+              className="h-full w-full rounded-full object-cover object-center"
             />
           ) : (
             <span className="text-sm font-medium text-primary">{initials}</span>
