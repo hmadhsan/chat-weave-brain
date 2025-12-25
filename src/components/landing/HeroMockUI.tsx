@@ -1,6 +1,57 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MessageSquare, Users, Sparkles, Send, Lock } from 'lucide-react';
+
+// Typewriter component for AI response
+const TypewriterText = ({ text, isActive, speed = 30 }: { text: string; isActive: boolean; speed?: number }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  
+  useEffect(() => {
+    if (!isActive) {
+      setDisplayedText('');
+      return;
+    }
+    
+    let index = 0;
+    setDisplayedText('');
+    
+    const interval = setInterval(() => {
+      if (index < text.length) {
+        setDisplayedText(text.slice(0, index + 1));
+        index++;
+      } else {
+        clearInterval(interval);
+      }
+    }, speed);
+    
+    return () => clearInterval(interval);
+  }, [text, isActive, speed]);
+  
+  // Parse text into lines for proper formatting
+  const lines = useMemo(() => {
+    return displayedText.split('\n');
+  }, [displayedText]);
+  
+  return (
+    <div className="text-sm text-foreground space-y-1">
+      {lines.map((line, i) => (
+        <p 
+          key={i}
+          className={line.startsWith('•') ? 'pl-2 text-muted-foreground' : ''}
+        >
+          {line}
+          {i === lines.length - 1 && displayedText.length < text.length && (
+            <motion.span
+              className="inline-block w-1.5 h-4 bg-sidechat-purple ml-0.5 align-middle"
+              animate={{ opacity: [1, 0] }}
+              transition={{ duration: 0.5, repeat: Infinity }}
+            />
+          )}
+        </p>
+      ))}
+    </div>
+  );
+};
 
 // Team members with distinct colors and avatar images
 const teamMembers = [
@@ -273,24 +324,11 @@ const HeroMockUI = () => {
                           AI Response
                         </span>
                       </div>
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.2, duration: 0.4 }}
-                        className="text-sm text-foreground space-y-1"
-                      >
-                        {aiResponse.split('\n').map((line, i) => (
-                          <motion.p 
-                            key={i}
-                            initial={{ opacity: 0, x: -5 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.3 + i * 0.1 }}
-                            className={line.startsWith('•') ? 'pl-2 text-muted-foreground' : ''}
-                          >
-                            {line}
-                          </motion.p>
-                        ))}
-                      </motion.div>
+                      <TypewriterText 
+                        text={aiResponse} 
+                        isActive={phase === 'aiResponse'} 
+                        speed={25}
+                      />
                     </div>
                   </motion.div>
                 )}
