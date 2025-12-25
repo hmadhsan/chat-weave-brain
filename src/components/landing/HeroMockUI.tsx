@@ -2,13 +2,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { MessageSquare, Users, Sparkles, Send, Lock } from 'lucide-react';
 
-// Team members with distinct colors
+// Team members with distinct colors (4 members)
 const teamMembers = [
   { name: 'Sarah', color: 'hsl(var(--primary))' },
   { name: 'Alex', color: 'hsl(262 80% 60%)' },
-  { name: 'Mike', color: 'hsl(190 70% 50%)' },
+  { name: 'Jordan', color: 'hsl(190 70% 50%)' },
   { name: 'Emma', color: 'hsl(340 70% 55%)' },
-  { name: 'James', color: 'hsl(45 90% 50%)' },
 ];
 
 // Animation phases with longer durations
@@ -17,7 +16,7 @@ const PHASE_DURATIONS = {
   transition: 1500,     // Transition to private
   privateChat: 4500,    // Private discussion
   sendToAI: 1500,       // Send to AI button
-  aiResponse: 3500,     // AI responds
+  aiResponse: 4000,     // AI responds
   reset: 1000,          // Brief pause before loop
 };
 
@@ -26,13 +25,12 @@ const HeroMockUI = () => {
   const [visibleMessages, setVisibleMessages] = useState(0);
   const [privateMessages, setPrivateMessages] = useState(0);
 
-  // Group chat messages (5 members actively chatting)
+  // Group chat messages (4 members actively chatting)
   const groupMessages = [
-    { user: 'Sarah', content: "Hey team, we need to finalize the feature roadmap" },
-    { user: 'Mike', content: "I have some ideas for the dashboard" },
-    { user: 'Emma', content: "Let's make sure we prioritize user feedback" },
-    { user: 'James', content: "Agreed! The analytics show interesting patterns" },
-    { user: 'Alex', content: "Sarah, want to brainstorm privately first?" },
+    { user: 'Sarah', content: "Hey team! Ready to brainstorm on the new feature?" },
+    { user: 'Jordan', content: "Absolutely! I have some ideas about the user onboarding flow." },
+    { user: 'Emma', content: "Let's make sure we consider the mobile experience too." },
+    { user: 'Alex', content: "Sarah, let's start a private thread to hash out the details first." },
   ];
 
   // Private thread between Sarah & Alex
@@ -42,7 +40,7 @@ const HeroMockUI = () => {
     { user: 'Sarah', content: "Let's ask AI for suggestions..." },
   ];
 
-  const aiResponse = "Based on your discussion: Focus on simplifying step 3 with progressive disclosure. Consider adding a skip option with smart defaults.";
+  const aiResponse = "I've reviewed your private discussion and synthesized the key takeaways:\n• Focus on simplifying step 3\n• Add progressive disclosure\n• Consider skip option with smart defaults";
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -53,7 +51,7 @@ const HeroMockUI = () => {
         if (visibleMessages < groupMessages.length) {
           timeout = setTimeout(() => {
             setVisibleMessages(prev => prev + 1);
-          }, 800);
+          }, 900);
         } else {
           timeout = setTimeout(() => {
             setPhase('transition');
@@ -157,7 +155,7 @@ const HeroMockUI = () => {
               <motion.div
                 key={member.name}
                 className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2 border-card"
-                style={{ backgroundColor: member.color, zIndex: 5 - i }}
+                style={{ backgroundColor: member.color, zIndex: 4 - i }}
                 animate={{
                   opacity: highlightPrivateMembers && !['Sarah', 'Alex'].includes(member.name) ? 0.4 : 1,
                   scale: highlightPrivateMembers && ['Sarah', 'Alex'].includes(member.name) ? 1.1 : 1,
@@ -170,7 +168,7 @@ const HeroMockUI = () => {
           </div>
         </div>
 
-        <div className="flex h-[340px]">
+        <div className="flex h-[360px]">
           {/* Sidebar */}
           <div className="w-14 bg-sidechat-navy flex flex-col items-center py-4 gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -203,7 +201,7 @@ const HeroMockUI = () => {
             <div className="px-4 py-2 border-b border-border/50">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground"># general</span>
-                <span className="text-xs text-muted-foreground">5 members</span>
+                <span className="text-xs text-muted-foreground">4 members</span>
               </div>
             </div>
 
@@ -238,7 +236,7 @@ const HeroMockUI = () => {
                     </motion.div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-foreground">{msg.user}</p>
-                      <p className="text-sm text-muted-foreground truncate">{msg.content}</p>
+                      <p className="text-sm text-muted-foreground">{msg.content}</p>
                     </div>
                   </motion.div>
                 );
@@ -248,28 +246,40 @@ const HeroMockUI = () => {
               <AnimatePresence>
                 {phase === 'aiResponse' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
                     className="flex gap-2"
                   >
                     <div className="w-8 h-8 rounded-full bg-sidechat-purple flex items-center justify-center shrink-0">
                       <Sparkles className="w-4 h-4 text-white" />
                     </div>
-                    <div className="flex-1 bg-sidechat-purple/10 rounded-lg p-3 border border-sidechat-purple/20">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-xs font-medium text-sidechat-purple">AI Assistant</p>
-                        <span className="text-[10px] text-muted-foreground">via Sarah & Alex's thread</span>
+                    <div className="flex-1 bg-sidechat-purple/10 rounded-lg p-3 border border-sidechat-purple/30">
+                      <div className="flex items-center gap-2 mb-2">
+                        <p className="text-xs font-semibold text-sidechat-purple">AI Assistant</p>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sidechat-purple/20 text-sidechat-purple font-medium">
+                          AI Response
+                        </span>
                       </div>
-                      <motion.p 
-                        className="text-sm text-foreground"
+                      <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.3, duration: 0.5 }}
+                        transition={{ delay: 0.2, duration: 0.4 }}
+                        className="text-sm text-foreground space-y-1"
                       >
-                        {aiResponse}
-                      </motion.p>
+                        {aiResponse.split('\n').map((line, i) => (
+                          <motion.p 
+                            key={i}
+                            initial={{ opacity: 0, x: -5 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 + i * 0.1 }}
+                            className={line.startsWith('•') ? 'pl-2 text-muted-foreground' : ''}
+                          >
+                            {line}
+                          </motion.p>
+                        ))}
+                      </motion.div>
                     </div>
                   </motion.div>
                 )}
@@ -369,7 +379,7 @@ const HeroMockUI = () => {
                         className="w-full mt-2 px-3 py-2 bg-sidechat-purple text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        {phase === 'aiResponse' ? 'Sent!' : 'Send to AI'}
+                        {phase === 'aiResponse' ? '✓ Sent!' : 'Send to AI'}
                       </motion.button>
                     )}
                   </AnimatePresence>
@@ -384,9 +394,11 @@ const HeroMockUI = () => {
       <motion.div 
         className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-3xl"
         animate={{
-          background: showPrivatePanel 
-            ? 'radial-gradient(circle, hsl(262 80% 60% / 0.08) 0%, transparent 70%)'
-            : 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)'
+          background: focusOnAIResponse
+            ? 'radial-gradient(circle, hsl(262 80% 60% / 0.12) 0%, transparent 70%)'
+            : showPrivatePanel 
+              ? 'radial-gradient(circle, hsl(262 80% 60% / 0.08) 0%, transparent 70%)'
+              : 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)'
         }}
         transition={{ duration: 0.6 }}
       />

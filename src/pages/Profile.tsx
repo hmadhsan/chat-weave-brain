@@ -159,7 +159,7 @@ const Profile = () => {
                   <img 
                     src={profile.avatar_url} 
                     alt="Avatar" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                   />
                 ) : (
                   <UserIcon className="w-10 h-10 text-muted-foreground" />
