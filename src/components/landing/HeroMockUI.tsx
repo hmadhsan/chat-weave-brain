@@ -372,14 +372,11 @@ const HeroMockUI = () => {
                         initial={{ opacity: 0, scale: 0.9, y: 10 }}
                         animate={{ 
                           opacity: 1, 
-                          scale: phase === 'sendToAI' ? [1, 1.02, 1] : 1, 
+                          scale: 1, 
                           y: 0,
-                          boxShadow: phase === 'sendToAI' 
-                            ? ['0 0 0px hsl(262 80% 60% / 0)', '0 0 20px hsl(262 80% 60% / 0.4)', '0 0 0px hsl(262 80% 60% / 0)']
-                            : '0 0 0px transparent'
                         }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        transition={{ duration: 0.8, repeat: phase === 'sendToAI' ? Infinity : 0 }}
+                        transition={{ duration: 0.3 }}
                         className="w-full mt-2 px-3 py-2 bg-sidechat-purple text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
