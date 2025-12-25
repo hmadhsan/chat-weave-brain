@@ -2,3 +2,9 @@ project_id = "qozcasdjnhgvvjvylepm"
 
 [functions.chat-ai]
 verify_jwt = false
+
+[functions.send-invitation]
+verify_jwt = false
+
+[functions.accept-invitation]
+verify_jwt = false

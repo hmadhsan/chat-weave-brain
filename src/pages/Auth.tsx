@@ -29,7 +29,14 @@ const Auth = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (user) {
-      navigate('/app');
+      // Check for pending invitation
+      const pendingInvite = sessionStorage.getItem('pendingInvite');
+      if (pendingInvite) {
+        sessionStorage.removeItem('pendingInvite');
+        navigate(`/invite/${pendingInvite}`);
+      } else {
+        navigate('/app');
+      }
     }
   }, [user, navigate]);
 

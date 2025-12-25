@@ -1,22 +1,28 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
-import { Message, PrivateThread, ThreadMessage, User, Group } from '@/types/sidechat';
-import { mockGroups, mockMessages, mockUsers } from '@/data/mockData';
+import { PrivateThread, ThreadMessage, User, Group, Message } from '@/types/sidechat';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useGroups, useMessages, useGroupMembers } from '@/hooks/useGroups';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
 import CreateThreadModal from './CreateThreadModal';
 import CreateGroupModal from './CreateGroupModal';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const AppShell = () => {
   const { toast } = useToast();
   const { user, profile } = useAuth();
   
+  // Real database hooks
+  const { groups: dbGroups, loading: groupsLoading, createGroup: dbCreateGroup, refetchGroups } = useGroups();
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const { messages: dbMessages, sendMessage: dbSendMessage } = useMessages(activeGroupId);
+  const { members: dbMembers } = useGroupMembers(activeGroupId);
+
   // Create a User object from the authenticated user
   const currentUser: User = useMemo(() => ({
     id: user?.id || 'unknown',
@@ -26,20 +32,64 @@ const AppShell = () => {
     status: 'online' as const,
   }), [user, profile]);
 
-  // Merge current user with mock users for display purposes
-  const allUsers = useMemo(() => {
-    const filtered = mockUsers.filter(u => u.id !== currentUser.id);
-    return [currentUser, ...filtered];
-  }, [currentUser]);
+  // Convert db members to User objects
+  const groupUsers = useMemo((): User[] => {
+    const memberUsers: User[] = dbMembers.map(m => ({
+      id: m.user_id,
+      name: m.profiles?.full_name || m.profiles?.email?.split('@')[0] || 'User',
+      email: m.profiles?.email || '',
+      avatar: m.profiles?.avatar_url || undefined,
+      status: 'online' as const,
+    }));
+    
+    // Ensure current user is always included
+    if (!memberUsers.find(u => u.id === currentUser.id)) {
+      memberUsers.push(currentUser);
+    }
+    
+    return memberUsers;
+  }, [dbMembers, currentUser]);
 
-  const [groups, setGroups] = useState<Group[]>(() => 
-    mockGroups.map(g => ({
-      ...g,
-      members: g.members.map(m => m.id === 'user-1' ? currentUser : m)
-    }))
-  );
-  const [activeGroupId, setActiveGroupId] = useState<string | null>(mockGroups[0]?.id || null);
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  // Convert db groups to Group format
+  const groups: Group[] = useMemo(() => {
+    return dbGroups.map(g => ({
+      id: g.id,
+      name: g.name,
+      members: groupUsers,
+      createdAt: new Date(g.created_at),
+    }));
+  }, [dbGroups, groupUsers]);
+
+  // Convert db messages to Message format
+  const groupMessages: Message[] = useMemo(() => {
+    return dbMessages.map(m => ({
+      id: m.id,
+      groupId: m.group_id,
+      userId: m.user_id,
+      content: m.content,
+      createdAt: new Date(m.created_at),
+      isAI: m.is_ai,
+      threadId: m.thread_id || undefined,
+    }));
+  }, [dbMessages]);
+
+  // Set initial active group
+  useEffect(() => {
+    if (!activeGroupId && groups.length > 0) {
+      setActiveGroupId(groups[0].id);
+    }
+  }, [groups, activeGroupId]);
+
+  // Check for pending invite after auth
+  useEffect(() => {
+    const pendingInvite = sessionStorage.getItem('pendingInvite');
+    if (pendingInvite && user) {
+      sessionStorage.removeItem('pendingInvite');
+      // Navigate to invite page - this is handled by the AcceptInvite component
+    }
+  }, [user]);
+
+  // Local state for threads (not persisted yet)
   const [threads, setThreads] = useState<PrivateThread[]>([]);
   const [activeThread, setActiveThread] = useState<PrivateThread | null>(null);
   const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>([]);
@@ -48,7 +98,6 @@ const AppShell = () => {
   const [isSendingToAI, setIsSendingToAI] = useState(false);
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
-  const groupMessages = messages.filter((m) => m.groupId === activeGroupId);
   const currentThreadMessages = threadMessages.filter((m) => m.threadId === activeThread?.id);
 
   const handleSelectGroup = (groupId: string) => {
@@ -56,19 +105,10 @@ const AppShell = () => {
     setActiveThread(null);
   };
 
-  const handleSendMessage = useCallback((content: string) => {
+  const handleSendMessage = useCallback(async (content: string) => {
     if (!activeGroupId) return;
-
-    const newMessage: Message = {
-      id: uuidv4(),
-      groupId: activeGroupId,
-      userId: currentUser.id,
-      content,
-      createdAt: new Date(),
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-  }, [activeGroupId, currentUser.id]);
+    await dbSendMessage(content);
+  }, [activeGroupId, dbSendMessage]);
 
   const handleCreateThread = (name: string, members: User[]) => {
     if (!activeGroupId) return;
@@ -91,21 +131,11 @@ const AppShell = () => {
     });
   };
 
-  const handleCreateGroup = (name: string, members: User[]) => {
-    const newGroup: Group = {
-      id: uuidv4(),
-      name,
-      members,
-      createdAt: new Date(),
-    };
-
-    setGroups((prev) => [...prev, newGroup]);
-    setActiveGroupId(newGroup.id);
-    
-    toast({
-      title: 'Group created',
-      description: `"${name}" has been created with ${members.length} member${members.length > 1 ? 's' : ''}.`,
-    });
+  const handleCreateGroup = async (name: string) => {
+    const newGroup = await dbCreateGroup(name);
+    if (newGroup) {
+      setActiveGroupId(newGroup.id);
+    }
   };
 
   const handleSendThreadMessage = useCallback((content: string) => {
@@ -130,7 +160,7 @@ const AppShell = () => {
     try {
       // Build thread context with actual user names
       const threadContext = currentThreadMessages.map((m) => {
-        const msgUser = allUsers.find((u) => u.id === m.userId);
+        const msgUser = groupUsers.find((u) => u.id === m.userId);
         return `${msgUser?.name || 'Unknown'}: ${m.content}`;
       }).join('\n');
 
@@ -156,17 +186,21 @@ const AppShell = () => {
         throw new Error('No response from AI');
       }
 
-      const aiMessage: Message = {
-        id: uuidv4(),
-        groupId: activeGroupId,
-        userId: 'ai',
-        content: aiContent,
-        createdAt: new Date(),
-        isAI: true,
-        threadId: activeThread.id,
-      };
+      // Insert AI message to database
+      const { error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          group_id: activeGroupId,
+          user_id: user!.id,
+          content: aiContent,
+          is_ai: true,
+          thread_id: activeThread.id,
+        });
 
-      setMessages((prev) => [...prev, aiMessage]);
+      if (insertError) {
+        console.error('Error inserting AI message:', insertError);
+      }
+
       setActiveThread(null);
 
       toast({
@@ -188,6 +222,18 @@ const AppShell = () => {
   const handleCloseThread = () => {
     setActiveThread(null);
   };
+
+  // Loading state
+  if (groupsLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading your groups...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!activeGroup) {
     return (
@@ -216,8 +262,8 @@ const AppShell = () => {
         <CreateGroupModal
           isOpen={isGroupModalOpen}
           onClose={() => setIsGroupModalOpen(false)}
-          onCreate={handleCreateGroup}
-          availableMembers={allUsers}
+          onCreate={(name) => handleCreateGroup(name)}
+          availableMembers={[currentUser]}
           currentUser={currentUser}
         />
       </div>
@@ -238,11 +284,12 @@ const AppShell = () => {
       <GroupChat
         group={activeGroup}
         messages={groupMessages}
-        users={allUsers}
+        users={groupUsers}
         currentUserId={currentUser.id}
         onSendMessage={handleSendMessage}
         onStartThread={() => setIsThreadModalOpen(true)}
         activeThread={activeThread}
+        groupId={activeGroupId || undefined}
       />
 
       {/* Private Thread Panel */}
@@ -251,7 +298,7 @@ const AppShell = () => {
           <PrivateThreadPanel
             thread={activeThread}
             messages={currentThreadMessages}
-            users={allUsers}
+            users={groupUsers}
             currentUserId={currentUser.id}
             onClose={handleCloseThread}
             onSendMessage={handleSendThreadMessage}
@@ -266,7 +313,7 @@ const AppShell = () => {
         isOpen={isThreadModalOpen}
         onClose={() => setIsThreadModalOpen(false)}
         onCreate={handleCreateThread}
-        availableMembers={activeGroup.members}
+        availableMembers={groupUsers}
         currentUser={currentUser}
       />
 
@@ -274,8 +321,8 @@ const AppShell = () => {
       <CreateGroupModal
         isOpen={isGroupModalOpen}
         onClose={() => setIsGroupModalOpen(false)}
-        onCreate={handleCreateGroup}
-        availableMembers={allUsers}
+        onCreate={(name) => handleCreateGroup(name)}
+        availableMembers={[currentUser]}
         currentUser={currentUser}
       />
     </div>
