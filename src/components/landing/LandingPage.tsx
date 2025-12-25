@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Lock, Users, Sparkles, Zap } from 'lucide-react';
+import { ArrowRight, Lock, Users, Sparkles, Zap, MessageCircle, Brain, Shield, ChevronRight } from 'lucide-react';
 import HeroMockUI from './HeroMockUI';
 import SidechatLogo from '@/components/SidechatLogo';
 import WaitlistModal from './WaitlistModal';
@@ -153,6 +153,143 @@ const LandingPage = () => {
                 <p className="text-muted-foreground">
                   {feature.description}
                 </p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* The Problem & Solution Section */}
+      <section className="py-20 px-6">
+        <div className="container mx-auto">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
+              The problem with AI group chats
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Traditional AI chats see everything. Sidechat gives you control.
+            </p>
+          </motion.div>
+
+          {/* Visual Comparison */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+            {/* Without Sidechat */}
+            <motion.div
+              className="relative bg-destructive/5 rounded-2xl p-8 border border-destructive/20"
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="absolute -top-3 left-6 px-3 py-1 bg-destructive/10 text-destructive text-sm font-medium rounded-full">
+                Without Sidechat
+              </div>
+              <div className="mt-4 space-y-4">
+                {/* Mock chat bubbles */}
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <MessageCircle className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 bg-muted/50 rounded-lg p-3">
+                    <p className="text-sm text-muted-foreground">"Here's my rough idea for the project..."</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                    <Brain className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1 bg-destructive/10 rounded-lg p-3 border border-destructive/20">
+                    <p className="text-sm text-destructive">AI sees everything instantly... even half-baked ideas</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-destructive">
+                  <Shield className="w-4 h-4" />
+                  <span>No privacy for brainstorming</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* With Sidechat */}
+            <motion.div
+              className="relative bg-primary/5 rounded-2xl p-8 border border-primary/20"
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="absolute -top-3 left-6 px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
+                With Sidechat
+              </div>
+              <div className="mt-4 space-y-4">
+                {/* Mock chat bubbles */}
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Lock className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 bg-primary/10 rounded-lg p-3">
+                    <p className="text-sm text-foreground">"Let's brainstorm privately first..."</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Users className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 bg-primary/10 rounded-lg p-3">
+                    <p className="text-sm text-foreground">"Great idea! Let's refine it together."</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <Shield className="w-4 h-4" />
+                    <span>Private until you're ready</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-primary bg-primary/10 px-2 py-1 rounded-full">
+                    <Sparkles className="w-3 h-3" />
+                    <span>Send to AI</span>
+                    <ChevronRight className="w-3 h-3" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Use Cases */}
+          <motion.div
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h3 className="font-display text-xl font-semibold text-foreground mb-2">
+              Perfect for teams who need to think before they share
+            </h3>
+          </motion.div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+            {[
+              { icon: '🎨', label: 'Design Teams', desc: 'Iterate on concepts privately' },
+              { icon: '💼', label: 'Product Teams', desc: 'Refine roadmaps together' },
+              { icon: '📝', label: 'Content Teams', desc: 'Draft ideas collaboratively' },
+              { icon: '🔬', label: 'Research Teams', desc: 'Discuss findings safely' },
+            ].map((useCase, index) => (
+              <motion.div
+                key={useCase.label}
+                className="bg-card rounded-xl p-4 border border-border text-center hover:border-primary/30 hover:shadow-md transition-all duration-300"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+              >
+                <div className="text-3xl mb-2">{useCase.icon}</div>
+                <h4 className="font-medium text-foreground text-sm mb-1">{useCase.label}</h4>
+                <p className="text-xs text-muted-foreground">{useCase.desc}</p>
               </motion.div>
             ))}
           </div>
