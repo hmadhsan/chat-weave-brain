@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Sparkles, CheckCircle } from 'lucide-react';
+import { X, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import SidechatLogo from '@/components/SidechatLogo';
 
 interface WaitlistModalProps {
   isOpen: boolean;
@@ -102,10 +103,8 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
                     >
                       {/* Header */}
                       <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
-                          <Sparkles className="w-8 h-8 text-primary" />
-                        </div>
-                        <h2 className="font-display text-2xl font-bold text-foreground mb-2">
+                        <SidechatLogo size="lg" showText={false} />
+                        <h2 className="font-display text-2xl font-bold text-foreground mb-2 mt-4">
                           Join the Waitlist
                         </h2>
                         <p className="text-muted-foreground">
