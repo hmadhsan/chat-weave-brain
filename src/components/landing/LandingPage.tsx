@@ -228,25 +228,26 @@ const LandingPage = () => {
                 if (!ctaEmail.trim()) return;
 
                 setCtaLoading(true);
-                const { data, error } = await supabase.functions.invoke('waitlist-join', {
-                  body: { name: 'Website Waitlist', email: ctaEmail.trim() },
+                const { data, error } = await supabase.rpc('join_waitlist', {
+                  _name: 'Website Waitlist',
+                  _email: ctaEmail.trim(),
                 });
                 setCtaLoading(false);
 
                 if (error) {
-                  toast.error('Something went wrong. Please try again.');
+                  toast.error(error.message || 'Something went wrong. Please try again.');
                   return;
                 }
 
-                if (!data?.success) {
-                  toast.error(data?.error || 'Something went wrong. Please try again.');
-                  return;
+                const row = data?.[0];
+                if (row?.already_joined) {
+                  toast.info('This email is already on the waitlist!');
+                } else {
+                  const numberText = row?.join_number ? `You're #${row.join_number} on the waitlist!` : "You've joined the waitlist!";
+                  toast.success(numberText, {
+                    description: "We'll notify you when Sidechat launches.",
+                  });
                 }
-
-                const numberText = data?.joinNumber ? `You're #${data.joinNumber} on the waitlist!` : "You've joined the waitlist!";
-                toast.success(numberText, {
-                  description: "We'll notify you when Sidechat launches.",
-                });
                 setCtaEmail('');
               }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"

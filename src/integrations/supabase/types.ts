@@ -212,6 +212,13 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      join_waitlist: {
+        Args: { _email: string; _name: string }
+        Returns: {
+          already_joined: boolean
+          join_number: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
