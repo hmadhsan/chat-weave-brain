@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, Lock, Users, Sparkles, Zap } from 'lucide-react';
 import HeroMockUI from './HeroMockUI';
+import HowItWorksSection from './HowItWorksSection';
 import SidechatLogo from '@/components/SidechatLogo';
 import WaitlistModal from './WaitlistModal';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -31,24 +33,19 @@ const LandingPage = () => {
     },
   ];
 
-  const steps = [
-    { number: '01', title: 'Start chatting', description: 'Open a group conversation with your team' },
-    { number: '02', title: 'Go private', description: 'Create a private thread with select members' },
-    { number: '03', title: 'Brainstorm freely', description: 'Collaborate without AI interference' },
-    { number: '04', title: 'Send to AI', description: 'Get AI insights back in the main chat' },
-  ];
-
-
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <SidechatLogo size="sm" />
-          <Button variant="hero" size="sm" onClick={() => setIsWaitlistOpen(true)}>
-            Join Waitlist
-            <ArrowRight className="w-4 h-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="hero" size="sm" onClick={() => setIsWaitlistOpen(true)}>
+              Join Waitlist
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -185,51 +182,8 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              How it works
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Four simple steps to smarter collaboration.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-4 gap-6">
-            {steps.map((step, index) => (
-              <motion.div
-                key={step.number}
-                className="relative"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <div className="text-6xl font-display font-bold text-primary/10 mb-2">
-                  {step.number}
-                </div>
-                <h3 className="font-display text-lg font-semibold text-foreground mb-1">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {step.description}
-                </p>
-                {index < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-8 right-0 w-full h-px bg-gradient-to-r from-primary/20 to-transparent" />
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* How It Works - New Premium Section */}
+      <HowItWorksSection />
 
       {/* CTA Section */}
       <section className="py-20 px-6">
@@ -307,11 +261,23 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-border">
-        <div className="container mx-auto flex items-center justify-between">
+        <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <SidechatLogo size="xs" />
-          <p className="text-sm text-muted-foreground">
-            © 2025 Sidechat. Private brainstorms, better outcomes.
-          </p>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://twitter.com/sidechat2" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+            <p className="text-sm text-muted-foreground">
+              © 2025 Sidechat. Private brainstorms, better outcomes.
+            </p>
+          </div>
         </div>
       </footer>
 
