@@ -54,7 +54,7 @@ const SidechatLogo = ({
             cy="7"
             r="1.5"
             fill="currentColor"
-            className="text-sidechat-cyan"
+            className="text-accent"
           />
         </svg>
       </div>
