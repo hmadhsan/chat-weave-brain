@@ -39,9 +39,9 @@ const LandingPage = () => {
       <header className="fixed top-0 left-0 right-0 z-50 glass">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <SidechatLogo size="sm" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="hero" size="sm" onClick={() => setIsWaitlistOpen(true)}>
+            <Button variant="hero" size="sm" onClick={() => setIsWaitlistOpen(true)} aria-label="Join the Sidechat waitlist">
               Join Waitlist
               <ArrowRight className="w-4 h-4" />
             </Button>
@@ -91,7 +91,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Button variant="hero" size="xl" onClick={() => setIsWaitlistOpen(true)}>
+              <Button variant="hero" size="xl" onClick={() => setIsWaitlistOpen(true)} aria-label="Join the Sidechat waitlist">
                 Join Waitlist
                 <ArrowRight className="w-5 h-5" />
               </Button>
@@ -169,12 +169,15 @@ const LandingPage = () => {
               href="https://www.producthunt.com/products/sidechat-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sidechat-2" 
               target="_blank" 
               rel="noopener noreferrer"
+              aria-label="View Sidechat on Product Hunt"
             >
               <img 
-                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1054816&theme=light&t=1766784507312" 
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1054816&theme=neutral&t=1766784507312" 
                 alt="Sidechat - Private Brainstorm Threads for Group AI Chats | Product Hunt" 
                 width="250" 
-                height="54" 
+                height="54"
+                loading="lazy"
+                className="hover:opacity-90 transition-opacity"
               />
             </a>
           </motion.div>
@@ -267,9 +270,10 @@ const LandingPage = () => {
               href="https://twitter.com/sidechat2" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="Follow Sidechat on Twitter"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
               </svg>
             </a>
