@@ -64,10 +64,11 @@ export default {
         sidechat: {
           navy: "hsl(var(--sidechat-navy))",
           slate: "hsl(var(--sidechat-slate))",
-          teal: "hsl(var(--sidechat-teal))",
-          "teal-light": "hsl(var(--sidechat-teal-light))",
-          cyan: "hsl(var(--sidechat-cyan))",
           purple: "hsl(var(--sidechat-purple))",
+          "purple-light": "hsl(var(--sidechat-purple-light))",
+          cyan: "hsl(var(--sidechat-cyan))",
+          "cyan-light": "hsl(var(--sidechat-cyan-light))",
+          violet: "hsl(var(--sidechat-violet))",
         },
       },
       borderRadius: {
