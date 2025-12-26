@@ -159,46 +159,29 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Use Cases Section */}
-      <section className="py-20 px-6">
+      {/* Product Hunt Badge */}
+      <section className="py-12 px-6">
         <div className="container mx-auto">
-          {/* Use Cases */}
           <motion.div
-            className="text-center mb-12"
+            className="flex justify-center"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Perfect for teams who need to think before they share
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Whether you're designing, planning, or researching — brainstorm privately, then get AI insights when ready.
-            </p>
+            <a 
+              href="https://www.producthunt.com/products/sidechat-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sidechat-2" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <img 
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1054816&theme=light&t=1766784507312" 
+                alt="Sidechat - Private Brainstorm Threads for Group AI Chats | Product Hunt" 
+                width="250" 
+                height="54" 
+              />
+            </a>
           </motion.div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {[
-              { icon: '🎨', label: 'Design Teams', desc: 'Iterate on concepts privately' },
-              { icon: '💼', label: 'Product Teams', desc: 'Refine roadmaps together' },
-              { icon: '📝', label: 'Content Teams', desc: 'Draft ideas collaboratively' },
-              { icon: '🔬', label: 'Research Teams', desc: 'Discuss findings safely' },
-            ].map((useCase, index) => (
-              <motion.div
-                key={useCase.label}
-                className="bg-card rounded-xl p-6 border border-border text-center hover:border-primary/30 hover:shadow-lg transition-all duration-300"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-              >
-                <div className="text-4xl mb-3">{useCase.icon}</div>
-                <h4 className="font-semibold text-foreground text-base mb-2">{useCase.label}</h4>
-                <p className="text-sm text-muted-foreground">{useCase.desc}</p>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
 
