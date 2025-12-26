@@ -82,8 +82,7 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              Collaborate with your team in private threads, then intentionally send your refined ideas to AI. 
-              Get intelligent responses right back in your group chat.
+              Collaborate with your team in private threads, refine your thinking, then ask AI for clarity.
             </motion.p>
 
             <motion.div
