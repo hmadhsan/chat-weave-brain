@@ -42,7 +42,7 @@ const TypewriterText = ({ text, isActive, speed = 30 }: { text: string; isActive
           {line}
           {i === lines.length - 1 && displayedText.length < text.length && (
             <motion.span
-              className="inline-block w-1.5 h-4 bg-sidechat-purple ml-0.5 align-middle"
+              className="inline-block w-1.5 h-4 bg-primary ml-0.5 align-middle"
               animate={{ opacity: [1, 0] }}
               transition={{ duration: 0.5, repeat: Infinity }}
             />
@@ -56,8 +56,8 @@ const TypewriterText = ({ text, isActive, speed = 30 }: { text: string; isActive
 // Team members with distinct colors and avatar images
 const teamMembers = [
   { name: 'Sarah', color: 'hsl(var(--primary))', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face' },
-  { name: 'Alex', color: 'hsl(262 80% 60%)', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
-  { name: 'Jordan', color: 'hsl(190 70% 50%)', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' },
+  { name: 'Alex', color: 'hsl(var(--sidechat-purple))', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
+  { name: 'Jordan', color: 'hsl(var(--accent))', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' },
   { name: 'Emma', color: 'hsl(340 70% 55%)', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face' },
 ];
 
@@ -314,13 +314,13 @@ const HeroMockUI = () => {
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                     className="flex gap-2"
                   >
-                    <div className="w-8 h-8 rounded-full bg-sidechat-purple flex items-center justify-center shrink-0">
-                      <Sparkles className="w-4 h-4 text-white" />
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4 text-primary-foreground" />
                     </div>
-                    <div className="flex-1 bg-sidechat-purple/10 rounded-lg p-3 border border-sidechat-purple/30">
+                    <div className="flex-1 bg-primary/10 rounded-lg p-3 border border-primary/30">
                       <div className="flex items-center gap-2 mb-2">
-                        <p className="text-xs font-semibold text-sidechat-purple">AI Assistant</p>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-sidechat-purple/20 text-sidechat-purple font-medium">
+                        <p className="text-xs font-semibold text-primary">AI Assistant</p>
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
                           AI Response
                         </span>
                       </div>
@@ -426,7 +426,7 @@ const HeroMockUI = () => {
                         }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.3 }}
-                        className="w-full mt-2 px-3 py-2 bg-sidechat-purple text-white text-xs font-medium rounded-lg flex items-center justify-center gap-2"
+                        className="w-full mt-2 px-3 py-2 bg-primary text-primary-foreground text-xs font-medium rounded-lg flex items-center justify-center gap-2"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         {phase === 'aiResponse' ? '✓ Sent!' : 'Send to AI'}
@@ -445,9 +445,9 @@ const HeroMockUI = () => {
         className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full blur-3xl"
         animate={{
           background: focusOnAIResponse
-            ? 'radial-gradient(circle, hsl(262 80% 60% / 0.12) 0%, transparent 70%)'
+            ? 'radial-gradient(circle, hsl(var(--primary) / 0.12) 0%, transparent 70%)'
             : showPrivatePanel 
-              ? 'radial-gradient(circle, hsl(262 80% 60% / 0.08) 0%, transparent 70%)'
+              ? 'radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)'
               : 'radial-gradient(circle, hsl(var(--primary) / 0.06) 0%, transparent 70%)'
         }}
         transition={{ duration: 0.6 }}

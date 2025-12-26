@@ -196,9 +196,9 @@ const WaitlistModal = ({ isOpen, onClose }: WaitlistModalProps) => {
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", delay: 0.1 }}
-                        className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500/10 mb-6"
+                        className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/10 mb-6"
                       >
-                        <CheckCircle className="w-10 h-10 text-green-500" />
+                        <CheckCircle className="w-10 h-10 text-accent" />
                       </motion.div>
                       <h2 className="font-display text-2xl font-bold text-foreground mb-2">
                         You're on the list!
