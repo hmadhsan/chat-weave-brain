@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroups, useMessages, useGroupMembers } from '@/hooks/useGroups';
 import { useSideThreads, useSideThreadMessages, DbSideThread } from '@/hooks/useSideThreads';
+import { usePendingInvitations } from '@/hooks/usePendingInvitations';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
@@ -22,6 +23,9 @@ const AppShell = () => {
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const { messages: dbMessages, sendMessage: dbSendMessage } = useMessages(activeGroupId);
   const { members: dbMembers } = useGroupMembers(activeGroupId);
+
+  // Pending invitations
+  const { invitations: pendingInvitations, acceptInvitation, loading: invitationsLoading } = usePendingInvitations();
 
   // Side threads from database
   const { threads: dbThreads, createThread: dbCreateThread } = useSideThreads(activeGroupId);
@@ -118,6 +122,27 @@ const AppShell = () => {
   const handleSelectGroup = (groupId: string) => {
     setActiveGroupId(groupId);
     setActiveThreadId(null);
+  };
+
+  const handleAcceptInvitation = async (token: string) => {
+    const result = await acceptInvitation(token);
+    if (result.success) {
+      toast({
+        title: 'Invitation accepted!',
+        description: `You've joined ${result.groupName || 'the group'}`,
+      });
+      // Refresh groups list to show new group
+      await refetchGroups();
+      if (result.groupId) {
+        setActiveGroupId(result.groupId);
+      }
+    } else {
+      toast({
+        title: 'Failed to accept invitation',
+        description: result.error || 'Please try again',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSendMessage = useCallback(async (content: string) => {
@@ -240,6 +265,9 @@ const AppShell = () => {
           activeGroupId={activeGroupId}
           onSelectGroup={handleSelectGroup}
           onCreateGroup={() => setIsGroupModalOpen(true)}
+          pendingInvitations={pendingInvitations}
+          onAcceptInvitation={handleAcceptInvitation}
+          invitationsLoading={invitationsLoading}
         />
         
         <div className="flex-1 flex items-center justify-center">
@@ -284,6 +312,9 @@ const AppShell = () => {
         activeGroupId={activeGroupId}
         onSelectGroup={handleSelectGroup}
         onCreateGroup={() => setIsGroupModalOpen(true)}
+        pendingInvitations={pendingInvitations}
+        onAcceptInvitation={handleAcceptInvitation}
+        invitationsLoading={invitationsLoading}
       />
 
       {/* Main Chat */}

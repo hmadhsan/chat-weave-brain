@@ -5,15 +5,28 @@ import { Hash, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import UserMenu from './UserMenu';
 import SidechatLogo from '@/components/SidechatLogo';
+import PendingInvitationsCard from './PendingInvitationsCard';
+import { PendingInvitation } from '@/hooks/usePendingInvitations';
 
 interface GroupSidebarProps {
   groups: Group[];
   activeGroupId: string | null;
   onSelectGroup: (groupId: string) => void;
   onCreateGroup: () => void;
+  pendingInvitations?: PendingInvitation[];
+  onAcceptInvitation?: (token: string) => void;
+  invitationsLoading?: boolean;
 }
 
-const GroupSidebar = ({ groups, activeGroupId, onSelectGroup, onCreateGroup }: GroupSidebarProps) => {
+const GroupSidebar = ({ 
+  groups, 
+  activeGroupId, 
+  onSelectGroup, 
+  onCreateGroup,
+  pendingInvitations = [],
+  onAcceptInvitation,
+  invitationsLoading = false
+}: GroupSidebarProps) => {
   return (
     <div className="w-64 h-full bg-card border-r border-border flex flex-col">
       {/* Header with Logo */}
@@ -26,6 +39,17 @@ const GroupSidebar = ({ groups, activeGroupId, onSelectGroup, onCreateGroup }: G
           </Button>
         </div>
       </div>
+
+      {/* Pending Invitations */}
+      {pendingInvitations.length > 0 && onAcceptInvitation && (
+        <div className="border-b border-border">
+          <PendingInvitationsCard
+            invitations={pendingInvitations}
+            onAccept={onAcceptInvitation}
+            loading={invitationsLoading}
+          />
+        </div>
+      )}
 
       {/* Groups List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
