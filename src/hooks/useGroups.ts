@@ -233,24 +233,31 @@ export function useMessages(groupId: string | null) {
 
     fetchMessages();
 
-    // Subscribe to new messages
+    // Subscribe to message changes
     const channel = supabase
       .channel(`messages:${groupId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'messages',
           filter: `group_id=eq.${groupId}`,
         },
         (payload) => {
-          const newMessage = payload.new as DbMessage;
-          setMessages(prev => {
-            // Avoid duplicates
-            if (prev.some(m => m.id === newMessage.id)) return prev;
-            return [...prev, newMessage];
-          });
+          if (payload.eventType === 'INSERT') {
+            const newMessage = payload.new as DbMessage;
+            setMessages(prev => {
+              if (prev.some(m => m.id === newMessage.id)) return prev;
+              return [...prev, newMessage];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedMessage = payload.new as DbMessage;
+            setMessages(prev => prev.map(m => m.id === updatedMessage.id ? updatedMessage : m));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedMessage = payload.old as { id: string };
+            setMessages(prev => prev.filter(m => m.id !== deletedMessage.id));
+          }
         }
       )
       .subscribe();
@@ -280,5 +287,43 @@ export function useMessages(groupId: string | null) {
     }
   }, [groupId, user]);
 
-  return { messages, loading, sendMessage };
+  const editMessage = useCallback(async (messageId: string, newContent: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ content: newContent })
+        .eq('id', messageId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: newContent } : m));
+      return true;
+    } catch (error) {
+      console.error('Error editing message:', error);
+      return false;
+    }
+  }, [user]);
+
+  const deleteMessage = useCallback(async (messageId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      return false;
+    }
+  }, [user]);
+
+  return { messages, loading, sendMessage, editMessage, deleteMessage };
 }
