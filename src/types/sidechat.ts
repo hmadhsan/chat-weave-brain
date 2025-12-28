@@ -31,6 +31,12 @@ export interface Message {
   createdAt: Date;
   isAI?: boolean;
   threadId?: string;
+  replyToId?: string;
+  replyTo?: Message;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
 }
 
 export interface PrivateThread {
@@ -48,4 +54,10 @@ export interface ThreadMessage {
   userId: string;
   content: string;
   createdAt: Date;
+  replyToId?: string;
+  replyTo?: ThreadMessage;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  fileSize?: number;
 }

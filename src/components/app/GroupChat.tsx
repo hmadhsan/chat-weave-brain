@@ -10,6 +10,7 @@ import InviteMemberModal from './InviteMemberModal';
 import TypingIndicator from './TypingIndicator';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
+import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -40,7 +41,7 @@ interface GroupChatProps {
   messages: (Message & { is_pinned?: boolean })[];
   users: User[];
   currentUserId: string;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, replyToId?: string | null, file?: { url: string; name: string; type: string; size: number } | null) => void;
   onStartThread: () => void;
   onEditMessage?: (messageId: string, newContent: string) => Promise<boolean>;
   onDeleteMessage?: (messageId: string) => Promise<boolean>;
@@ -69,8 +70,10 @@ const GroupChat = ({
   onDeleteThread,
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
   const { profile } = useAuth();
 
   // Typing indicator
@@ -84,8 +87,18 @@ const GroupChat = ({
   const messageIds = useMemo(() => messages.map(m => m.id), [messages]);
   const { toggleReaction, getReactionGroups } = useMessageReactions(messageIds);
 
+  // Read receipts
+  const { markAsRead, getReadBy } = useMessageReadReceipts(messageIds);
+
   // Pinned messages
   const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
+
+  // Message lookup for replies
+  const messageMap = useMemo(() => {
+    const map = new Map<string, Message>();
+    messages.forEach(m => map.set(m.id, m));
+    return map;
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -94,6 +107,34 @@ const GroupChat = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Mark messages as read when visible
+  useEffect(() => {
+    if (!messages.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const messageId = entry.target.getAttribute('data-message-id');
+            if (messageId) {
+              markAsRead(messageId);
+            }
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.querySelectorAll('[data-message-id]').forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    return () => observer.disconnect();
+  }, [messages, markAsRead]);
 
   const getUserById = (userId: string) => users.find((u) => u.id === userId);
   const getCreatorName = (createdBy: string) => {
@@ -115,6 +156,15 @@ const GroupChat = ({
 
   const handleToggleReaction = (messageId: string, emoji: string) => {
     toggleReaction(messageId, emoji);
+  };
+
+  const handleReply = (message: Message) => {
+    setReplyTo(message);
+  };
+
+  const handleSendMessage = (content: string, file?: { url: string; name: string; type: string; size: number } | null) => {
+    onSendMessage(content, replyTo?.id || null, file);
+    setReplyTo(null);
   };
 
   return (
@@ -247,7 +297,7 @@ const GroupChat = ({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto" ref={messagesContainerRef}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
@@ -262,19 +312,28 @@ const GroupChat = ({
           </div>
         ) : (
           <div className="py-4">
-            {messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                user={getUserById(message.userId)}
-                isOwn={message.userId === currentUserId}
-                onEdit={onEditMessage}
-                onDelete={onDeleteMessage}
-                onTogglePin={onTogglePin}
-                reactions={getReactionGroups(message.id)}
-                onToggleReaction={handleToggleReaction}
-              />
-            ))}
+            {messages.map((message) => {
+              const replyToMessage = message.replyToId ? messageMap.get(message.replyToId) : null;
+              return (
+                <div key={message.id} data-message-id={message.id}>
+                  <ChatMessage
+                    message={message}
+                    user={getUserById(message.userId)}
+                    isOwn={message.userId === currentUserId}
+                    onEdit={onEditMessage}
+                    onDelete={onDeleteMessage}
+                    onTogglePin={onTogglePin}
+                    onReply={handleReply}
+                    reactions={getReactionGroups(message.id)}
+                    onToggleReaction={handleToggleReaction}
+                    readBy={getReadBy(message.id)}
+                    users={users}
+                    totalMembers={group.members.length}
+                    replyToMessage={replyToMessage}
+                  />
+                </div>
+              );
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -299,10 +358,13 @@ const GroupChat = ({
 
       {/* Input */}
       <ChatInput
-        onSend={onSendMessage}
+        onSend={handleSendMessage}
         placeholder={`Message ${group.name}...`}
         onTyping={startTyping}
         onStopTyping={stopTyping}
+        replyTo={replyTo ? { id: replyTo.id, content: replyTo.content, userId: replyTo.userId } : null}
+        onCancelReply={() => setReplyTo(null)}
+        users={users}
       />
 
       {/* Invite Modal */}
