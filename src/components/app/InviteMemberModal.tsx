@@ -39,22 +39,23 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
 
     setGenerating(true);
     try {
-      const placeholderEmail = `link+${globalThis.crypto?.randomUUID?.() ?? Date.now()}@invite.sidechat.local`;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-      // Create invitation directly in the database
-      const { data: invitation, error } = await supabase
-        .from('invitations')
-        .insert({
-          group_id: groupId,
-          email: placeholderEmail,
-          invited_by: user.id,
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.functions.invoke('create-invite-link', {
+        body: { groupId },
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
 
       if (error) {
-        throw error;
+        throw new Error(error.message);
       }
+
+      if (!data?.token) {
+        throw new Error(data?.error || 'Failed to create invitation');
+      }
+
+      const invitationToken = data.token as string;
 
       // Generate the invite link - always use the published URL when running in a preview environment
       const host = window.location.hostname;
@@ -66,7 +67,7 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
         (host.endsWith('.lovable.app') && host.includes('--'));
 
       const appUrl = isPreview ? 'https://chat-weave-brain.lovable.app' : window.location.origin;
-      const link = `${appUrl}/invite/${invitation.token}`;
+      const link = `${appUrl}/invite/${invitationToken}`;
       setInviteLink(link);
 
       toast({
