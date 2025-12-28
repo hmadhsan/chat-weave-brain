@@ -34,6 +34,11 @@ export interface DbMessage {
   thread_id: string | null;
   created_at: string;
   is_pinned: boolean;
+  reply_to_id: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  file_type: string | null;
+  file_size: number | null;
 }
 
 export function useGroups() {
@@ -268,7 +273,13 @@ export function useMessages(groupId: string | null) {
     };
   }, [groupId]);
 
-  const sendMessage = useCallback(async (content: string, isAi = false, threadId?: string | null) => {
+  const sendMessage = useCallback(async (
+    content: string, 
+    isAi = false, 
+    threadId?: string | null,
+    replyToId?: string | null,
+    file?: { url: string; name: string; type: string; size: number } | null
+  ) => {
     if (!groupId || !user) return;
 
     try {
@@ -280,6 +291,11 @@ export function useMessages(groupId: string | null) {
           content,
           is_ai: isAi,
           thread_id: threadId,
+          reply_to_id: replyToId || null,
+          file_url: file?.url || null,
+          file_name: file?.name || null,
+          file_type: file?.type || null,
+          file_size: file?.size || null,
         });
 
       if (error) throw error;

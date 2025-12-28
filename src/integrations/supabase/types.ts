@@ -146,34 +146,78 @@ export type Database = {
           },
         ]
       }
+      message_reads: {
+        Row: {
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
           created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
           group_id: string
           id: string
           is_ai: boolean
           is_pinned: boolean
+          reply_to_id: string | null
           thread_id: string | null
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           group_id: string
           id?: string
           is_ai?: boolean
           is_pinned?: boolean
+          reply_to_id?: string | null
           thread_id?: string | null
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           group_id?: string
           id?: string
           is_ai?: boolean
           is_pinned?: boolean
+          reply_to_id?: string | null
           thread_id?: string | null
           user_id?: string
         }
@@ -183,6 +227,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -246,32 +297,83 @@ export type Database = {
           },
         ]
       }
+      side_thread_message_reads: {
+        Row: {
+          id: string
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "side_thread_message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "side_thread_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       side_thread_messages: {
         Row: {
           content: string
           created_at: string
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
           id: string
           is_pinned: boolean
+          reply_to_id: string | null
           side_thread_id: string
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           is_pinned?: boolean
+          reply_to_id?: string | null
           side_thread_id: string
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
           id?: string
           is_pinned?: boolean
+          reply_to_id?: string | null
           side_thread_id?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "side_thread_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "side_thread_messages"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "side_thread_messages_side_thread_id_fkey"
             columns: ["side_thread_id"]

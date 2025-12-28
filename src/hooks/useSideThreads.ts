@@ -33,6 +33,11 @@ export interface DbSideThreadMessage {
   content: string;
   created_at: string;
   is_pinned: boolean;
+  reply_to_id: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  file_type: string | null;
+  file_size: number | null;
 }
 
 export function useSideThreads(groupId: string | null) {
@@ -306,7 +311,11 @@ export function useSideThreadMessages(threadId: string | null) {
     };
   }, [threadId]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (
+    content: string,
+    replyToId?: string | null,
+    file?: { url: string; name: string; type: string; size: number } | null
+  ) => {
     if (!threadId || !user) return;
 
     try {
@@ -316,6 +325,11 @@ export function useSideThreadMessages(threadId: string | null) {
           side_thread_id: threadId,
           user_id: user.id,
           content,
+          reply_to_id: replyToId || null,
+          file_url: file?.url || null,
+          file_name: file?.name || null,
+          file_type: file?.type || null,
+          file_size: file?.size || null,
         });
 
       if (error) throw error;

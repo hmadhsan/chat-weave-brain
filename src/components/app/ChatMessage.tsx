@@ -4,7 +4,7 @@ import { Message, User } from '@/types/sidechat';
 import UserAvatar from './UserAvatar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Sparkles, MoreVertical, Pencil, Trash2, X, Check, Pin, PinOff } from 'lucide-react';
+import { Sparkles, MoreVertical, Pencil, Trash2, X, Check, Pin, PinOff, Reply } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -26,7 +26,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import ReactionPicker from './ReactionPicker';
 import MessageReactions from './MessageReactions';
+import FileAttachment from './FileAttachment';
+import ReadReceipts from './ReadReceipts';
 import { ReactionGroup } from '@/hooks/useReactions';
+import { ReadReceipt } from '@/hooks/useReadReceipts';
 
 interface ChatMessageProps {
   message: Message & { is_pinned?: boolean };
@@ -35,8 +38,13 @@ interface ChatMessageProps {
   onEdit?: (messageId: string, newContent: string) => Promise<boolean>;
   onDelete?: (messageId: string) => Promise<boolean>;
   onTogglePin?: (messageId: string) => Promise<boolean>;
+  onReply?: (message: Message) => void;
   reactions?: ReactionGroup[];
   onToggleReaction?: (messageId: string, emoji: string) => void;
+  readBy?: ReadReceipt[];
+  users?: User[];
+  totalMembers?: number;
+  replyToMessage?: Message | null;
 }
 
 const ChatMessage = ({ 
@@ -46,8 +54,13 @@ const ChatMessage = ({
   onEdit, 
   onDelete,
   onTogglePin,
+  onReply,
   reactions = [],
   onToggleReaction,
+  readBy = [],
+  users = [],
+  totalMembers = 1,
+  replyToMessage,
 }: ChatMessageProps) => {
   const isAI = message.isAI;
   const [isEditing, setIsEditing] = useState(false);
@@ -94,6 +107,14 @@ const ChatMessage = ({
       onToggleReaction(message.id, emoji);
     }
   };
+
+  const handleReply = () => {
+    if (onReply) {
+      onReply(message);
+    }
+  };
+
+  const replyUser = replyToMessage ? users.find((u) => u.id === replyToMessage.userId) : null;
 
   // Simple markdown-like rendering for AI messages
   const renderContent = (content: string) => {
@@ -175,8 +196,14 @@ const ChatMessage = ({
             )}>
               {isAI ? 'Sidechat AI' : user?.name || 'Unknown'}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
               {format(message.createdAt, 'h:mm a')}
+              <ReadReceipts 
+                readBy={readBy} 
+                users={users} 
+                isOwn={!!isOwn} 
+                totalMembers={totalMembers} 
+              />
             </span>
             {isAI && (
               <span className="text-xs bg-gradient-to-r from-violet-500/20 to-indigo-500/20 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full flex items-center gap-1">
@@ -191,6 +218,21 @@ const ChatMessage = ({
               </span>
             )}
           </div>
+
+          {/* Reply context */}
+          {replyToMessage && (
+            <div className="flex items-center gap-2 mt-1 mb-1 pl-3 border-l-2 border-primary/30">
+              <Reply className="w-3 h-3 text-muted-foreground shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-medium text-primary">
+                  {replyUser?.name || 'Unknown'}
+                </span>
+                <p className="text-xs text-muted-foreground truncate">
+                  {replyToMessage.content}
+                </p>
+              </div>
+            </div>
+          )}
           
           {isEditing ? (
             <div className="mt-2 space-y-2">
@@ -224,7 +266,18 @@ const ChatMessage = ({
             </div>
           ) : (
             <>
-              {renderContent(message.content)}
+              {message.content && renderContent(message.content)}
+              
+              {/* File attachment */}
+              {message.fileUrl && message.fileName && message.fileType && (
+                <FileAttachment
+                  fileUrl={message.fileUrl}
+                  fileName={message.fileName}
+                  fileType={message.fileType}
+                  fileSize={message.fileSize}
+                />
+              )}
+              
               <MessageReactions 
                 reactions={reactions} 
                 onToggle={(emoji) => handleReaction(emoji)} 
@@ -241,8 +294,8 @@ const ChatMessage = ({
               <ReactionPicker onSelect={handleReaction} />
             )}
 
-            {/* Edit/Delete/Pin Menu */}
-            {(isOwn || onTogglePin) && !isAI && (onEdit || onDelete || onTogglePin) && (
+            {/* Edit/Delete/Pin/Reply Menu */}
+            {(isOwn || onTogglePin || onReply) && !isAI && (onEdit || onDelete || onTogglePin || onReply) && (
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -251,6 +304,12 @@ const ChatMessage = ({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {onReply && (
+                      <DropdownMenuItem onClick={handleReply}>
+                        <Reply className="w-4 h-4 mr-2" />
+                        Reply
+                      </DropdownMenuItem>
+                    )}
                     {onTogglePin && (
                       <DropdownMenuItem onClick={handleTogglePin}>
                         {message.is_pinned ? (
@@ -266,7 +325,7 @@ const ChatMessage = ({
                         )}
                       </DropdownMenuItem>
                     )}
-                    {isOwn && (onEdit || onDelete) && onTogglePin && (
+                    {isOwn && (onEdit || onDelete) && (onTogglePin || onReply) && (
                       <DropdownMenuSeparator />
                     )}
                     {isOwn && onEdit && (
