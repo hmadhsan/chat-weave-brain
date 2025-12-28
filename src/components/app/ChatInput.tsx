@@ -12,6 +12,8 @@ interface ChatInputProps {
   onSend: (content: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  onTyping?: () => void;
+  onStopTyping?: () => void;
 }
 
 const EMOJI_LIST = [
@@ -25,14 +27,26 @@ const EMOJI_LIST = [
   '✅', '❌', '⚡', '🚀', '💻', '📱', '🎯', '📈',
 ];
 
-const ChatInput = ({ onSend, placeholder = 'Type a message...', disabled }: ChatInputProps) => {
+const ChatInput = ({ onSend, placeholder = 'Type a message...', disabled, onTyping, onStopTyping }: ChatInputProps) => {
   const [content, setContent] = useState('');
   const [emojiOpen, setEmojiOpen] = useState(false);
+
+  const handleChange = (value: string) => {
+    setContent(value);
+    if (value.length > 0 && onTyping) {
+      onTyping();
+    } else if (value.length === 0 && onStopTyping) {
+      onStopTyping();
+    }
+  };
 
   const handleSend = () => {
     if (content.trim() && !disabled) {
       onSend(content.trim());
       setContent('');
+      if (onStopTyping) {
+        onStopTyping();
+      }
     }
   };
 
@@ -79,8 +93,9 @@ const ChatInput = ({ onSend, placeholder = 'Type a message...', disabled }: Chat
         
         <textarea
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => handleChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onBlur={onStopTyping}
           placeholder={placeholder}
           disabled={disabled}
           rows={1}

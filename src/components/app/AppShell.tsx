@@ -21,7 +21,7 @@ const AppShell = () => {
   // Real database hooks
   const { groups: dbGroups, loading: groupsLoading, createGroup: dbCreateGroup, refetchGroups } = useGroups();
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
-  const { messages: dbMessages, sendMessage: dbSendMessage, editMessage: dbEditMessage, deleteMessage: dbDeleteMessage } = useMessages(activeGroupId);
+  const { messages: dbMessages, sendMessage: dbSendMessage, editMessage: dbEditMessage, deleteMessage: dbDeleteMessage, togglePin: dbTogglePin } = useMessages(activeGroupId);
   const { members: dbMembers } = useGroupMembers(activeGroupId);
 
   // Pending invitations
@@ -30,7 +30,7 @@ const AppShell = () => {
   // Side threads from database
   const { threads: dbThreads, createThread: dbCreateThread, deleteThread: dbDeleteThread } = useSideThreads(activeGroupId);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
-  const { messages: threadMessages, sendMessage: sendThreadMessage, editMessage: editThreadMessage, deleteMessage: deleteThreadMessage } = useSideThreadMessages(activeThreadId);
+  const { messages: threadMessages, sendMessage: sendThreadMessage, editMessage: editThreadMessage, deleteMessage: deleteThreadMessage, togglePin: toggleThreadPin } = useSideThreadMessages(activeThreadId);
 
   // Create a User object from the authenticated user
   const currentUser: User = useMemo(() => ({
@@ -87,7 +87,7 @@ const AppShell = () => {
   }, [dbGroups, groupUsers]);
 
   // Convert db messages to Message format
-  const groupMessages: Message[] = useMemo(() => {
+  const groupMessages = useMemo(() => {
     return dbMessages.map(m => ({
       id: m.id,
       groupId: m.group_id,
@@ -96,6 +96,7 @@ const AppShell = () => {
       createdAt: new Date(m.created_at),
       isAI: m.is_ai,
       threadId: m.thread_id || undefined,
+      is_pinned: m.is_pinned,
     }));
   }, [dbMessages]);
 
@@ -351,6 +352,7 @@ const AppShell = () => {
         onStartThread={() => setIsThreadModalOpen(true)}
         onEditMessage={dbEditMessage}
         onDeleteMessage={dbDeleteMessage}
+        onTogglePin={dbTogglePin}
         activeThread={activeThreadForPanel}
         groupId={activeGroupId || undefined}
         sideThreads={dbThreads}
