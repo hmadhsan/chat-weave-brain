@@ -93,7 +93,7 @@ const Auth = () => {
             title: 'Account created!',
             description: 'Welcome to Sidechat!',
           });
-          navigate('/app');
+          // Let the useEffect handle redirect (it checks for pending invite)
         }
       } else {
         const { error } = await signIn(email, password);
@@ -112,7 +112,7 @@ const Auth = () => {
             });
           }
         } else {
-          navigate('/app');
+          // Let the useEffect handle redirect (it checks for pending invite)
         }
       }
     } finally {
