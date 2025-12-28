@@ -41,23 +41,36 @@ const AppShell = () => {
     status: 'online' as const,
   }), [user, profile]);
 
-  // Convert db members to User objects
+  // Convert db members to User objects with proper fallbacks
   const groupUsers = useMemo((): User[] => {
     const memberUsers: User[] = dbMembers.map(m => {
       const email = m.profiles?.email || '';
-      const emailName = email.split('@')[0] || 'Unknown';
+      const emailName = email ? email.split('@')[0] : '';
+      const displayName = m.profiles?.full_name || emailName || 'User';
+      
       return {
         id: m.user_id,
-        name: m.profiles?.full_name || emailName,
+        name: displayName,
         email: email,
         avatar: m.profiles?.avatar_url || undefined,
         status: 'online' as const,
       };
     });
     
-    // Ensure current user is always included
-    if (!memberUsers.find(u => u.id === currentUser.id)) {
+    // Ensure current user is always included with their proper name
+    const existingCurrentUser = memberUsers.find(u => u.id === currentUser.id);
+    if (!existingCurrentUser) {
       memberUsers.push(currentUser);
+    } else {
+      // Update current user with fresh profile data
+      const idx = memberUsers.findIndex(u => u.id === currentUser.id);
+      if (idx !== -1) {
+        memberUsers[idx] = {
+          ...memberUsers[idx],
+          name: currentUser.name || memberUsers[idx].name,
+          avatar: currentUser.avatar || memberUsers[idx].avatar,
+        };
+      }
     }
     
     return memberUsers;

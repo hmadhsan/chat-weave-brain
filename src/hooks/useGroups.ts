@@ -142,16 +142,30 @@ export function useGroupMembers(groupId: string | null) {
 
         // Then fetch profiles for these members
         const userIds = memberData.map(m => m.user_id);
-        const { data: profilesData } = await supabase
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, email, avatar_url')
           .in('id', userIds);
 
-        // Combine the data
-        const membersWithProfiles = memberData.map(member => ({
-          ...member,
-          profiles: profilesData?.find(p => p.id === member.user_id) || undefined,
-        }));
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+
+        console.log('Fetched profiles:', profilesData);
+
+        // Combine the data - ensure we always have profile data with fallbacks
+        const membersWithProfiles = memberData.map(member => {
+          const profile = profilesData?.find(p => p.id === member.user_id);
+          return {
+            ...member,
+            profiles: profile ? {
+              id: profile.id,
+              full_name: profile.full_name,
+              email: profile.email,
+              avatar_url: profile.avatar_url,
+            } : undefined,
+          };
+        });
 
         setMembers(membersWithProfiles as DbGroupMember[]);
       } catch (error) {
