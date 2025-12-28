@@ -1,20 +1,15 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ArrowRight, Lock, Users, Sparkles, Zap } from 'lucide-react';
+import { ArrowRight, Lock, Users, Sparkles, Zap, LogIn } from 'lucide-react';
 import HeroMockUI from './HeroMockUI';
 import HowItWorksSection from './HowItWorksSection';
 import SidechatLogo from '@/components/SidechatLogo';
-import WaitlistModal from './WaitlistModal';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
 
 const LandingPage = () => {
-  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
-  const [ctaEmail, setCtaEmail] = useState('');
-  const [ctaLoading, setCtaLoading] = useState(false);
+  const navigate = useNavigate();
+  
   const features = [
     {
       icon: Users,
@@ -41,8 +36,11 @@ const LandingPage = () => {
           <SidechatLogo size="sm" />
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button variant="hero" size="sm" onClick={() => setIsWaitlistOpen(true)} aria-label="Join the Sidechat waitlist">
-              Join Waitlist
+            <Button variant="ghost" size="sm" onClick={() => navigate('/auth')} aria-label="Sign in to Sidechat">
+              Sign In
+            </Button>
+            <Button variant="hero" size="sm" onClick={() => navigate('/auth')} aria-label="Sign up for Sidechat">
+              Get Started
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
@@ -91,9 +89,13 @@ const LandingPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Button variant="hero" size="xl" onClick={() => setIsWaitlistOpen(true)} aria-label="Join the Sidechat waitlist">
-                Join Waitlist
+              <Button variant="hero" size="xl" onClick={() => navigate('/auth')} aria-label="Get started with Sidechat">
+                Get Started Free
                 <ArrowRight className="w-5 h-5" />
+              </Button>
+              <Button variant="outline" size="xl" onClick={() => navigate('/auth')} aria-label="Sign in to Sidechat">
+                <LogIn className="w-5 h-5" />
+                Sign In
               </Button>
             </motion.div>
           </div>
@@ -204,55 +206,16 @@ const LandingPage = () => {
               Join teams who've discovered the power of intentional AI collaboration.
             </p>
             
-            {/* Inline waitlist form */}
-            <form 
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (!ctaEmail.trim()) return;
-
-                setCtaLoading(true);
-                const { data, error } = await supabase.rpc('join_waitlist', {
-                  _name: 'Website Waitlist',
-                  _email: ctaEmail.trim(),
-                });
-                setCtaLoading(false);
-
-                if (error) {
-                  toast.error(error.message || 'Something went wrong. Please try again.');
-                  return;
-                }
-
-                const row = data?.[0];
-                if (row?.already_joined) {
-                  toast.info('This email is already on the waitlist!');
-                } else {
-                  const numberText = row?.join_number ? `You're #${row.join_number} on the waitlist!` : "You've joined the waitlist!";
-                  toast.success(numberText, {
-                    description: "We'll notify you when Sidechat launches.",
-                  });
-                }
-                setCtaEmail('');
-              }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto"
-            >
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={ctaEmail}
-                onChange={(e) => setCtaEmail(e.target.value)}
-                className="h-12 bg-card/90 border-card text-foreground placeholder:text-muted-foreground flex-1"
-                required
-              />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button
-                type="submit"
                 size="lg"
-                className="bg-card text-foreground hover:bg-card/90 h-12 px-6 whitespace-nowrap"
-                disabled={ctaLoading}
+                className="bg-card text-foreground hover:bg-card/90 h-12 px-8"
+                onClick={() => navigate('/auth')}
               >
-                {ctaLoading ? 'Joining...' : 'Join Waitlist'}
+                Get Started Free
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
-            </form>
+            </div>
 
             {/* Decorative */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl" />
@@ -283,9 +246,6 @@ const LandingPage = () => {
           </div>
         </div>
       </footer>
-
-      {/* Waitlist Modal */}
-      <WaitlistModal isOpen={isWaitlistOpen} onClose={() => setIsWaitlistOpen(false)} />
     </div>
   );
 };
