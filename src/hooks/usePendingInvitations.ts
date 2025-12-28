@@ -25,7 +25,8 @@ export const usePendingInvitations = () => {
     }
 
     try {
-      const { data, error } = await supabase
+      // First get invitations
+      const { data: invData, error: invError } = await supabase
         .from('invitations')
         .select(`
           id,
@@ -33,27 +34,45 @@ export const usePendingInvitations = () => {
           group_id,
           created_at,
           expires_at,
-          groups(name),
-          profiles!invitations_invited_by_fkey(full_name, email)
+          invited_by,
+          groups(name)
         `)
         .eq('email', user.email)
         .eq('status', 'pending')
         .gt('expires_at', new Date().toISOString());
 
-      if (error) {
-        console.error('Error fetching invitations:', error);
+      if (invError) {
+        console.error('Error fetching invitations:', invError);
         return;
       }
 
-      const formatted: PendingInvitation[] = (data || []).map((inv: any) => ({
-        id: inv.id,
-        token: inv.token,
-        group_id: inv.group_id,
-        group_name: inv.groups?.name || 'Unknown Group',
-        invited_by_name: inv.profiles?.full_name || inv.profiles?.email || 'Someone',
-        created_at: inv.created_at,
-        expires_at: inv.expires_at,
-      }));
+      if (!invData || invData.length === 0) {
+        setInvitations([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get inviter profiles
+      const inviterIds = [...new Set(invData.map((inv: any) => inv.invited_by))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', inviterIds);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+
+      const formatted: PendingInvitation[] = invData.map((inv: any) => {
+        const inviterProfile = profileMap.get(inv.invited_by);
+        return {
+          id: inv.id,
+          token: inv.token,
+          group_id: inv.group_id,
+          group_name: inv.groups?.name || 'Unknown Group',
+          invited_by_name: inviterProfile?.full_name || inviterProfile?.email || 'Someone',
+          created_at: inv.created_at,
+          expires_at: inv.expires_at,
+        };
+      });
 
       setInvitations(formatted);
     } catch (err) {
