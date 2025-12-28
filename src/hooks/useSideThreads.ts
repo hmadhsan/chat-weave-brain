@@ -271,23 +271,31 @@ export function useSideThreadMessages(threadId: string | null) {
 
     fetchMessages();
 
-    // Subscribe to new messages with realtime
+    // Subscribe to message changes with realtime
     const channel = supabase
       .channel(`side_thread_messages:${threadId}`)
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'side_thread_messages',
           filter: `side_thread_id=eq.${threadId}`,
         },
         (payload) => {
-          const newMessage = payload.new as DbSideThreadMessage;
-          setMessages(prev => {
-            if (prev.some(m => m.id === newMessage.id)) return prev;
-            return [...prev, newMessage];
-          });
+          if (payload.eventType === 'INSERT') {
+            const newMessage = payload.new as DbSideThreadMessage;
+            setMessages(prev => {
+              if (prev.some(m => m.id === newMessage.id)) return prev;
+              return [...prev, newMessage];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            const updatedMessage = payload.new as DbSideThreadMessage;
+            setMessages(prev => prev.map(m => m.id === updatedMessage.id ? updatedMessage : m));
+          } else if (payload.eventType === 'DELETE') {
+            const deletedMessage = payload.old as { id: string };
+            setMessages(prev => prev.filter(m => m.id !== deletedMessage.id));
+          }
         }
       )
       .subscribe();
@@ -315,5 +323,43 @@ export function useSideThreadMessages(threadId: string | null) {
     }
   }, [threadId, user]);
 
-  return { messages, loading, sendMessage };
+  const editMessage = useCallback(async (messageId: string, newContent: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('side_thread_messages')
+        .update({ content: newContent })
+        .eq('id', messageId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, content: newContent } : m));
+      return true;
+    } catch (error) {
+      console.error('Error editing side thread message:', error);
+      return false;
+    }
+  }, [user]);
+
+  const deleteMessage = useCallback(async (messageId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('side_thread_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting side thread message:', error);
+      return false;
+    }
+  }, [user]);
+
+  return { messages, loading, sendMessage, editMessage, deleteMessage };
 }

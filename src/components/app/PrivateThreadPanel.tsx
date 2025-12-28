@@ -1,11 +1,28 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { PrivateThread, ThreadMessage, User } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { X, Lock, Sparkles, Loader2 } from 'lucide-react';
+import { X, Lock, Sparkles, Loader2, MoreVertical, Pencil, Trash2, Check } from 'lucide-react';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
 import { format } from 'date-fns';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface PrivateThreadPanelProps {
   thread: PrivateThread;
@@ -15,6 +32,8 @@ interface PrivateThreadPanelProps {
   onClose: () => void;
   onSendMessage: (content: string) => void;
   onSendToAI: () => void;
+  onEditMessage?: (messageId: string, newContent: string) => Promise<boolean>;
+  onDeleteMessage?: (messageId: string) => Promise<boolean>;
   isSendingToAI?: boolean;
 }
 
@@ -26,10 +45,15 @@ const PrivateThreadPanel = ({
   onClose,
   onSendMessage,
   onSendToAI,
+  onEditMessage,
+  onDeleteMessage,
   isSendingToAI,
 }: PrivateThreadPanelProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -39,6 +63,39 @@ const PrivateThreadPanel = ({
   }, [messages]);
 
   const getUserById = (userId: string) => users.find((u) => u.id === userId);
+
+  const handleStartEdit = (message: ThreadMessage) => {
+    setEditingMessageId(message.id);
+    setEditContent(message.content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!onEditMessage || !editingMessageId || !editContent.trim()) {
+      setEditingMessageId(null);
+      return;
+    }
+    
+    setIsLoading(true);
+    const success = await onEditMessage(editingMessageId, editContent.trim());
+    setIsLoading(false);
+    if (success) {
+      setEditingMessageId(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditContent('');
+  };
+
+  const handleDelete = async () => {
+    if (!onDeleteMessage || !messageToDelete) return;
+    
+    setIsLoading(true);
+    await onDeleteMessage(messageToDelete);
+    setIsLoading(false);
+    setMessageToDelete(null);
+  };
 
   return (
     <motion.div
@@ -91,12 +148,15 @@ const PrivateThreadPanel = ({
         ) : (
           messages.map((message) => {
             const user = getUserById(message.userId);
+            const isOwn = message.userId === currentUserId;
+            const isEditing = editingMessageId === message.id;
+            
             return (
               <motion.div
                 key={message.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex gap-2"
+                className="flex gap-2 group"
               >
                 <UserAvatar user={user} size="sm" />
                 <div className="flex-1 min-w-0">
@@ -108,10 +168,73 @@ const PrivateThreadPanel = ({
                       {format(message.createdAt, 'h:mm a')}
                     </span>
                   </div>
-                  <p className="text-sm text-foreground/90 mt-0.5">
-                    {message.content}
-                  </p>
+                  
+                  {isEditing ? (
+                    <div className="mt-1 space-y-2">
+                      <Textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="min-h-[40px] text-sm"
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={handleSaveEdit}
+                          disabled={isLoading || !editContent.trim()}
+                          className="gap-1 h-7 text-xs"
+                        >
+                          <Check className="w-3 h-3" />
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={handleCancelEdit}
+                          disabled={isLoading}
+                          className="gap-1 h-7 text-xs"
+                        >
+                          <X className="w-3 h-3" />
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-foreground/90 mt-0.5">
+                      {message.content}
+                    </p>
+                  )}
                 </div>
+                
+                {/* Edit/Delete Menu */}
+                {isOwn && !isEditing && (onEditMessage || onDeleteMessage) && (
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                          <MoreVertical className="w-3 h-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {onEditMessage && (
+                          <DropdownMenuItem onClick={() => handleStartEdit(message)}>
+                            <Pencil className="w-3 h-3 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                        )}
+                        {onDeleteMessage && (
+                          <DropdownMenuItem 
+                            onClick={() => setMessageToDelete(message.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="w-3 h-3 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
               </motion.div>
             );
           })
@@ -149,6 +272,28 @@ const PrivateThreadPanel = ({
         placeholder="Brainstorm ideas..."
         disabled={isSendingToAI}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!messageToDelete} onOpenChange={() => setMessageToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete message?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The message will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              disabled={isLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };

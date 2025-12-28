@@ -38,6 +38,8 @@ interface GroupChatProps {
   currentUserId: string;
   onSendMessage: (content: string) => void;
   onStartThread: () => void;
+  onEditMessage?: (messageId: string, newContent: string) => Promise<boolean>;
+  onDeleteMessage?: (messageId: string) => Promise<boolean>;
   activeThread?: PrivateThread | null;
   groupId?: string;
   sideThreads?: SideThreadItem[];
@@ -52,6 +54,8 @@ const GroupChat = ({
   currentUserId,
   onSendMessage,
   onStartThread,
+  onEditMessage,
+  onDeleteMessage,
   activeThread,
   groupId,
   sideThreads = [],
@@ -227,6 +231,8 @@ const GroupChat = ({
                 message={message}
                 user={getUserById(message.userId)}
                 isOwn={message.userId === currentUserId}
+                onEdit={onEditMessage}
+                onDelete={onDeleteMessage}
               />
             ))}
             <div ref={messagesEndRef} />
