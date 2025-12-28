@@ -2,16 +2,33 @@ import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash, UserPlus, Lock } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
 import InviteMemberModal from './InviteMemberModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface SideThreadItem {
   id: string;
   name: string;
   is_active: boolean;
+  created_by: string;
 }
 
 interface GroupChatProps {
@@ -25,6 +42,7 @@ interface GroupChatProps {
   groupId?: string;
   sideThreads?: SideThreadItem[];
   onSelectThread?: (threadId: string) => void;
+  onDeleteThread?: (threadId: string) => void;
 }
 
 const GroupChat = ({
@@ -38,9 +56,11 @@ const GroupChat = ({
   groupId,
   sideThreads = [],
   onSelectThread,
+  onDeleteThread,
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,6 +71,22 @@ const GroupChat = ({
   }, [messages]);
 
   const getUserById = (userId: string) => users.find((u) => u.id === userId);
+  const getCreatorName = (createdBy: string) => {
+    const creator = getUserById(createdBy);
+    return creator?.name || 'Unknown';
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, threadId: string) => {
+    e.stopPropagation();
+    setThreadToDelete(threadId);
+  };
+
+  const confirmDelete = () => {
+    if (threadToDelete && onDeleteThread) {
+      onDeleteThread(threadToDelete);
+    }
+    setThreadToDelete(null);
+  };
 
   return (
     <div className="flex-1 flex flex-col bg-background h-full">
@@ -104,24 +140,68 @@ const GroupChat = ({
         </div>
       </div>
 
-      {/* Side Threads Bar */}
+      {/* Side Threads Bar - Moved to left with vertical layout */}
       {sideThreads.length > 0 && (
-        <div className="px-4 py-2 border-b border-border bg-card/30 flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Threads:</span>
-          {sideThreads.map((thread) => (
-            <button
-              key={thread.id}
-              onClick={() => onSelectThread?.(thread.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
-                activeThread?.id === thread.id
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
-              }`}
-            >
-              <Lock className="w-3 h-3" />
-              {thread.name}
-            </button>
-          ))}
+        <div className="px-4 py-3 border-b border-border bg-card/30">
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Private Threads</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <TooltipProvider>
+              {sideThreads.map((thread) => {
+                const isOwner = thread.created_by === currentUserId;
+                const creatorName = getCreatorName(thread.created_by);
+                
+                return (
+                  <Tooltip key={thread.id}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={`group flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                          activeThread?.id === thread.id
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary/50 text-foreground hover:bg-secondary'
+                        }`}
+                        onClick={() => onSelectThread?.(thread.id)}
+                      >
+                        <Lock className="w-3 h-3 shrink-0" />
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate max-w-[120px]">{thread.name}</span>
+                          <span className={`text-[10px] flex items-center gap-1 ${
+                            activeThread?.id === thread.id 
+                              ? 'text-primary-foreground/70' 
+                              : 'text-muted-foreground'
+                          }`}>
+                            <UserIcon className="w-2.5 h-2.5" />
+                            {isOwner ? 'You' : creatorName}
+                          </span>
+                        </div>
+                        {isOwner && onDeleteThread && (
+                          <button
+                            onClick={(e) => handleDeleteClick(e, thread.id)}
+                            className={`ml-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
+                              activeThread?.id === thread.id
+                                ? 'hover:bg-primary-foreground/20'
+                                : 'hover:bg-destructive/20'
+                            }`}
+                          >
+                            <Trash2 className={`w-3 h-3 ${
+                              activeThread?.id === thread.id
+                                ? 'text-primary-foreground'
+                                : 'text-destructive'
+                            }`} />
+                          </button>
+                        )}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p>Created by {isOwner ? 'you' : creatorName}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </TooltipProvider>
+          </div>
         </div>
       )}
 
@@ -183,6 +263,24 @@ const GroupChat = ({
           groupName={group.name}
         />
       )}
+
+      {/* Delete Thread Confirmation */}
+      <AlertDialog open={!!threadToDelete} onOpenChange={() => setThreadToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Thread?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this private thread and all its messages. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
