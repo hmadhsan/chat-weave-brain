@@ -173,15 +173,27 @@ export function useSideThreadParticipants(threadId: string | null) {
 
         // Fetch profiles
         const userIds = participantData.map(p => p.user_id);
-        const { data: profilesData } = await supabase
+        const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, email, avatar_url')
           .in('id', userIds);
 
-        const participantsWithProfiles = participantData.map(p => ({
-          ...p,
-          profiles: profilesData?.find(profile => profile.id === p.user_id),
-        }));
+        if (profilesError) {
+          console.error('Error fetching participant profiles:', profilesError);
+        }
+
+        const participantsWithProfiles = participantData.map(p => {
+          const profile = profilesData?.find(profile => profile.id === p.user_id);
+          return {
+            ...p,
+            profiles: profile ? {
+              id: profile.id,
+              full_name: profile.full_name,
+              email: profile.email,
+              avatar_url: profile.avatar_url,
+            } : undefined,
+          };
+        });
 
         setParticipants(participantsWithProfiles as DbSideThreadParticipant[]);
       } catch (error) {
