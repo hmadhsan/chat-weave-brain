@@ -142,7 +142,38 @@ export function useSideThreads(groupId: string | null) {
     }
   }, [groupId, user, toast]);
 
-  return { threads, loading, createThread, refetchThreads: fetchThreads };
+  const deleteThread = useCallback(async (threadId: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('side_threads')
+        .delete()
+        .eq('id', threadId)
+        .eq('created_by', user.id);
+
+      if (error) throw error;
+
+      setThreads(prev => prev.filter(t => t.id !== threadId));
+
+      toast({
+        title: 'Thread deleted',
+        description: 'The private thread has been removed.',
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting thread:', error);
+      toast({
+        title: 'Failed to delete thread',
+        description: 'You can only delete threads you created.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [user, toast]);
+
+  return { threads, loading, createThread, deleteThread, refetchThreads: fetchThreads };
 }
 
 export function useSideThreadParticipants(threadId: string | null) {

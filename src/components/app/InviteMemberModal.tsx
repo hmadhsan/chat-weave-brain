@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link2, Copy, Check, Loader2 } from 'lucide-react';
+import { Link2, Copy, Check, Loader2, Twitter, Facebook, Linkedin, MessageCircle, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -72,7 +72,7 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
 
       toast({
         title: 'Invite link generated!',
-        description: 'Copy the link and share it with your teammate.',
+        description: 'Copy the link or share it via social media.',
       });
     } catch (error) {
       console.error('Error creating invitation:', error);
@@ -102,6 +102,34 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
         variant: 'destructive',
       });
     }
+  };
+
+  const shareMessage = `Join me on ${groupName}!`;
+
+  const shareToTwitter = () => {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}&url=${encodeURIComponent(inviteLink)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareToFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(inviteLink)}&quote=${encodeURIComponent(shareMessage)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareToLinkedIn = () => {
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(inviteLink)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const shareToWhatsApp = () => {
+    const url = `https://wa.me/?text=${encodeURIComponent(`${shareMessage} ${inviteLink}`)}`;
+    window.open(url, '_blank');
+  };
+
+  const shareToEmail = () => {
+    const subject = encodeURIComponent(`Join ${groupName}`);
+    const body = encodeURIComponent(`Hey!\n\nI'd like to invite you to join ${groupName}.\n\nClick here to join: ${inviteLink}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   const handleClose = () => {
@@ -171,12 +199,61 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Share this link via WhatsApp, Telegram, or any messaging app.
-                </p>
               </div>
 
-              <div className="flex gap-2">
+              {/* Social Share Buttons */}
+              <div className="space-y-2">
+                <Label>Share via</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    onClick={shareToWhatsApp}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 flex-1 min-w-[120px] bg-green-500/10 hover:bg-green-500/20 border-green-500/30 text-green-600 dark:text-green-400"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp
+                  </Button>
+                  <Button
+                    onClick={shareToTwitter}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 flex-1 min-w-[120px] bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30 text-blue-500"
+                  >
+                    <Twitter className="w-4 h-4" />
+                    Twitter
+                  </Button>
+                  <Button
+                    onClick={shareToFacebook}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 flex-1 min-w-[120px] bg-blue-600/10 hover:bg-blue-600/20 border-blue-600/30 text-blue-600"
+                  >
+                    <Facebook className="w-4 h-4" />
+                    Facebook
+                  </Button>
+                  <Button
+                    onClick={shareToLinkedIn}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 flex-1 min-w-[120px] bg-blue-700/10 hover:bg-blue-700/20 border-blue-700/30 text-blue-700 dark:text-blue-400"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                    LinkedIn
+                  </Button>
+                  <Button
+                    onClick={shareToEmail}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 flex-1 min-w-[120px]"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
                 <Button
                   onClick={() => {
                     setInviteLink('');

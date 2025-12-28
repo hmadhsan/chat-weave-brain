@@ -28,7 +28,7 @@ const AppShell = () => {
   const { invitations: pendingInvitations, acceptInvitation, loading: invitationsLoading } = usePendingInvitations();
 
   // Side threads from database
-  const { threads: dbThreads, createThread: dbCreateThread } = useSideThreads(activeGroupId);
+  const { threads: dbThreads, createThread: dbCreateThread, deleteThread: dbDeleteThread } = useSideThreads(activeGroupId);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const { messages: threadMessages, sendMessage: sendThreadMessage } = useSideThreadMessages(activeThreadId);
 
@@ -261,6 +261,13 @@ const AppShell = () => {
     setActiveThreadId(null);
   };
 
+  const handleDeleteThread = async (threadId: string) => {
+    const success = await dbDeleteThread(threadId);
+    if (success && activeThreadId === threadId) {
+      setActiveThreadId(null);
+    }
+  };
+
   // Loading state
   if (groupsLoading) {
     return (
@@ -346,6 +353,7 @@ const AppShell = () => {
         groupId={activeGroupId || undefined}
         sideThreads={dbThreads}
         onSelectThread={(threadId) => setActiveThreadId(threadId)}
+        onDeleteThread={handleDeleteThread}
       />
 
       {/* Private Thread Panel */}
