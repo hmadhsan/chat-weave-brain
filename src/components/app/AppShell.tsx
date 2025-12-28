@@ -43,13 +43,17 @@ const AppShell = () => {
 
   // Convert db members to User objects
   const groupUsers = useMemo((): User[] => {
-    const memberUsers: User[] = dbMembers.map(m => ({
-      id: m.user_id,
-      name: m.profiles?.full_name || m.profiles?.email?.split('@')[0] || 'User',
-      email: m.profiles?.email || '',
-      avatar: m.profiles?.avatar_url || undefined,
-      status: 'online' as const,
-    }));
+    const memberUsers: User[] = dbMembers.map(m => {
+      const email = m.profiles?.email || '';
+      const emailName = email.split('@')[0] || 'Unknown';
+      return {
+        id: m.user_id,
+        name: m.profiles?.full_name || emailName,
+        email: email,
+        avatar: m.profiles?.avatar_url || undefined,
+        status: 'online' as const,
+      };
+    });
     
     // Ensure current user is always included
     if (!memberUsers.find(u => u.id === currentUser.id)) {
