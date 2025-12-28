@@ -1,10 +1,13 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { PrivateThread, ThreadMessage, User } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { X, Lock, Sparkles, Loader2, MoreVertical, Pencil, Trash2, Check } from 'lucide-react';
+import { X, Lock, Sparkles, Loader2, MoreVertical, Pencil, Trash2, Check, Pin, PinOff } from 'lucide-react';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
+import TypingIndicator from './TypingIndicator';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -34,6 +37,7 @@ interface PrivateThreadPanelProps {
   onSendToAI: () => void;
   onEditMessage?: (messageId: string, newContent: string) => Promise<boolean>;
   onDeleteMessage?: (messageId: string) => Promise<boolean>;
+  onTogglePin?: (messageId: string) => Promise<boolean>;
   isSendingToAI?: boolean;
 }
 
@@ -47,6 +51,7 @@ const PrivateThreadPanel = ({
   onSendToAI,
   onEditMessage,
   onDeleteMessage,
+  onTogglePin,
   isSendingToAI,
 }: PrivateThreadPanelProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -54,6 +59,15 @@ const PrivateThreadPanel = ({
   const [editContent, setEditContent] = useState('');
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { profile } = useAuth();
+
+  // Typing indicator
+  const currentUserName = profile?.full_name || 'You';
+  const { typingUsers, startTyping, stopTyping } = useTypingIndicator(
+    `thread:${thread.id}`,
+    currentUserName
+  );
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -242,6 +256,9 @@ const PrivateThreadPanel = ({
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Typing Indicator */}
+      <TypingIndicator typingUsers={typingUsers} />
+
       {/* Send to AI Button */}
       {messages.length > 0 && (
         <div className="px-4 pb-2">
@@ -271,6 +288,8 @@ const PrivateThreadPanel = ({
         onSend={onSendMessage}
         placeholder="Brainstorm ideas..."
         disabled={isSendingToAI}
+        onTyping={startTyping}
+        onStopTyping={stopTyping}
       />
 
       {/* Delete Confirmation Dialog */}

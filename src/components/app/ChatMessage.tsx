@@ -4,13 +4,14 @@ import { Message, User } from '@/types/sidechat';
 import UserAvatar from './UserAvatar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Sparkles, MoreVertical, Pencil, Trash2, X, Check } from 'lucide-react';
+import { Sparkles, MoreVertical, Pencil, Trash2, X, Check, Pin, PinOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -23,16 +24,31 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import ReactionPicker from './ReactionPicker';
+import MessageReactions from './MessageReactions';
+import { ReactionGroup } from '@/hooks/useReactions';
 
 interface ChatMessageProps {
-  message: Message;
+  message: Message & { is_pinned?: boolean };
   user?: User;
   isOwn?: boolean;
   onEdit?: (messageId: string, newContent: string) => Promise<boolean>;
   onDelete?: (messageId: string) => Promise<boolean>;
+  onTogglePin?: (messageId: string) => Promise<boolean>;
+  reactions?: ReactionGroup[];
+  onToggleReaction?: (messageId: string, emoji: string) => void;
 }
 
-const ChatMessage = ({ message, user, isOwn, onEdit, onDelete }: ChatMessageProps) => {
+const ChatMessage = ({ 
+  message, 
+  user, 
+  isOwn, 
+  onEdit, 
+  onDelete,
+  onTogglePin,
+  reactions = [],
+  onToggleReaction,
+}: ChatMessageProps) => {
   const isAI = message.isAI;
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -65,6 +81,18 @@ const ChatMessage = ({ message, user, isOwn, onEdit, onDelete }: ChatMessageProp
   const handleCancelEdit = () => {
     setEditContent(message.content);
     setIsEditing(false);
+  };
+
+  const handleTogglePin = async () => {
+    if (onTogglePin) {
+      await onTogglePin(message.id);
+    }
+  };
+
+  const handleReaction = (emoji: string) => {
+    if (onToggleReaction) {
+      onToggleReaction(message.id, emoji);
+    }
   };
 
   // Simple markdown-like rendering for AI messages
@@ -125,10 +153,18 @@ const ChatMessage = ({ message, user, isOwn, onEdit, onDelete }: ChatMessageProp
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "flex gap-3 px-4 py-2 group hover:bg-secondary/30 transition-colors",
-          isAI && "bg-gradient-to-r from-violet-500/5 to-indigo-500/5 border-l-2 border-violet-500/30"
+          "flex gap-3 px-4 py-2 group hover:bg-secondary/30 transition-colors relative",
+          isAI && "bg-gradient-to-r from-violet-500/5 to-indigo-500/5 border-l-2 border-violet-500/30",
+          message.is_pinned && "bg-amber-500/5 border-l-2 border-amber-500/50"
         )}
       >
+        {/* Pin indicator */}
+        {message.is_pinned && (
+          <div className="absolute top-1 right-2">
+            <Pin className="w-3 h-3 text-amber-500 fill-amber-500" />
+          </div>
+        )}
+
         <UserAvatar user={user} isAI={isAI} showStatus />
         
         <div className="flex-1 min-w-0">
@@ -146,6 +182,12 @@ const ChatMessage = ({ message, user, isOwn, onEdit, onDelete }: ChatMessageProp
               <span className="text-xs bg-gradient-to-r from-violet-500/20 to-indigo-500/20 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 AI Summary
+              </span>
+            )}
+            {message.is_pinned && (
+              <span className="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Pin className="w-3 h-3" />
+                Pinned
               </span>
             )}
           </div>
@@ -181,37 +223,71 @@ const ChatMessage = ({ message, user, isOwn, onEdit, onDelete }: ChatMessageProp
               </div>
             </div>
           ) : (
-            renderContent(message.content)
+            <>
+              {renderContent(message.content)}
+              <MessageReactions 
+                reactions={reactions} 
+                onToggle={(emoji) => handleReaction(emoji)} 
+              />
+            </>
           )}
         </div>
 
-        {/* Edit/Delete Menu - Only show for own messages that aren't AI */}
-        {isOwn && !isAI && !isEditing && (onEdit || onDelete) && (
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {onEdit && (
-                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Edit
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <DropdownMenuItem 
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+        {/* Actions */}
+        {!isEditing && (
+          <div className="flex items-start gap-1">
+            {/* Reaction Picker */}
+            {onToggleReaction && (
+              <ReactionPicker onSelect={handleReaction} />
+            )}
+
+            {/* Edit/Delete/Pin Menu */}
+            {(isOwn || onTogglePin) && !isAI && (onEdit || onDelete || onTogglePin) && (
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {onTogglePin && (
+                      <DropdownMenuItem onClick={handleTogglePin}>
+                        {message.is_pinned ? (
+                          <>
+                            <PinOff className="w-4 h-4 mr-2" />
+                            Unpin
+                          </>
+                        ) : (
+                          <>
+                            <Pin className="w-4 h-4 mr-2" />
+                            Pin message
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    )}
+                    {isOwn && (onEdit || onDelete) && onTogglePin && (
+                      <DropdownMenuSeparator />
+                    )}
+                    {isOwn && onEdit && (
+                      <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                    )}
+                    {isOwn && onDelete && (
+                      <DropdownMenuItem 
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
         )}
       </motion.div>

@@ -1,12 +1,16 @@
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
 import InviteMemberModal from './InviteMemberModal';
+import TypingIndicator from './TypingIndicator';
+import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useMessageReactions } from '@/hooks/useReactions';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,13 +37,14 @@ interface SideThreadItem {
 
 interface GroupChatProps {
   group: Group;
-  messages: Message[];
+  messages: (Message & { is_pinned?: boolean })[];
   users: User[];
   currentUserId: string;
   onSendMessage: (content: string) => void;
   onStartThread: () => void;
   onEditMessage?: (messageId: string, newContent: string) => Promise<boolean>;
   onDeleteMessage?: (messageId: string) => Promise<boolean>;
+  onTogglePin?: (messageId: string) => Promise<boolean>;
   activeThread?: PrivateThread | null;
   groupId?: string;
   sideThreads?: SideThreadItem[];
@@ -56,6 +61,7 @@ const GroupChat = ({
   onStartThread,
   onEditMessage,
   onDeleteMessage,
+  onTogglePin,
   activeThread,
   groupId,
   sideThreads = [],
@@ -65,6 +71,21 @@ const GroupChat = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
+  const { profile } = useAuth();
+
+  // Typing indicator
+  const currentUserName = profile?.full_name || 'You';
+  const { typingUsers, startTyping, stopTyping } = useTypingIndicator(
+    groupId ? `group:${groupId}` : '',
+    currentUserName
+  );
+
+  // Reactions
+  const messageIds = useMemo(() => messages.map(m => m.id), [messages]);
+  const { toggleReaction, getReactionGroups } = useMessageReactions(messageIds);
+
+  // Pinned messages
+  const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -90,6 +111,10 @@ const GroupChat = ({
       onDeleteThread(threadToDelete);
     }
     setThreadToDelete(null);
+  };
+
+  const handleToggleReaction = (messageId: string, emoji: string) => {
+    toggleReaction(messageId, emoji);
   };
 
   return (
@@ -144,7 +169,19 @@ const GroupChat = ({
         </div>
       </div>
 
-      {/* Side Threads Bar - Moved to left with vertical layout */}
+      {/* Pinned Messages Bar */}
+      {pinnedMessages.length > 0 && (
+        <div className="px-4 py-2 border-b border-border bg-amber-500/5">
+          <div className="flex items-center gap-2">
+            <Pin className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+              {pinnedMessages.length} pinned message{pinnedMessages.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Side Threads Bar */}
       {sideThreads.length > 0 && (
         <div className="px-4 py-3 border-b border-border bg-card/30">
           <div className="flex items-center gap-2 mb-2">
@@ -233,12 +270,18 @@ const GroupChat = ({
                 isOwn={message.userId === currentUserId}
                 onEdit={onEditMessage}
                 onDelete={onDeleteMessage}
+                onTogglePin={onTogglePin}
+                reactions={getReactionGroups(message.id)}
+                onToggleReaction={handleToggleReaction}
               />
             ))}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
+
+      {/* Typing Indicator */}
+      <TypingIndicator typingUsers={typingUsers} />
 
       {/* Active Thread Indicator */}
       {activeThread && (
@@ -258,6 +301,8 @@ const GroupChat = ({
       <ChatInput
         onSend={onSendMessage}
         placeholder={`Message ${group.name}...`}
+        onTyping={startTyping}
+        onStopTyping={stopTyping}
       />
 
       {/* Invite Modal */}

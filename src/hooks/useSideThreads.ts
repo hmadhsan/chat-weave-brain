@@ -32,6 +32,7 @@ export interface DbSideThreadMessage {
   user_id: string;
   content: string;
   created_at: string;
+  is_pinned: boolean;
 }
 
 export function useSideThreads(groupId: string | null) {
@@ -361,5 +362,26 @@ export function useSideThreadMessages(threadId: string | null) {
     }
   }, [user]);
 
-  return { messages, loading, sendMessage, editMessage, deleteMessage };
+  const togglePin = useCallback(async (messageId: string) => {
+    if (!user) return false;
+
+    try {
+      const message = messages.find(m => m.id === messageId);
+      if (!message) return false;
+
+      const { error } = await supabase
+        .from('side_thread_messages')
+        .update({ is_pinned: !message.is_pinned })
+        .eq('id', messageId);
+
+      if (error) throw error;
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_pinned: !m.is_pinned } : m));
+      return true;
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      return false;
+    }
+  }, [user, messages]);
+
+  return { messages, loading, sendMessage, editMessage, deleteMessage, togglePin };
 }
