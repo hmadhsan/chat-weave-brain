@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Camera, Loader2, User as UserIcon } from 'lucide-react';
@@ -122,11 +122,11 @@ const Profile = () => {
   };
 
   // Update local state when profile changes
-  useState(() => {
+  useEffect(() => {
     if (profile?.full_name) {
       setDisplayName(profile.full_name);
     }
-  });
+  }, [profile?.full_name]);
 
   return (
     <div className="min-h-screen bg-background">
