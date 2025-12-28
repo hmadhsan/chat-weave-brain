@@ -121,12 +121,19 @@ const Profile = () => {
     }
   };
 
-  // Update local state when profile changes
+  // Refresh profile on mount and sync display name
+  useEffect(() => {
+    refreshProfile();
+  }, []);
+
   useEffect(() => {
     if (profile?.full_name) {
       setDisplayName(profile.full_name);
+    } else if (user?.email) {
+      // Default to email prefix if no name set
+      setDisplayName(user.email.split('@')[0]);
     }
-  }, [profile?.full_name]);
+  }, [profile?.full_name, user?.email]);
 
   return (
     <div className="min-h-screen bg-background">
