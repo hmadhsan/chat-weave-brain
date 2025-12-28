@@ -179,6 +179,105 @@ export type Database = {
         }
         Relationships: []
       }
+      side_thread_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          side_thread_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          side_thread_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          side_thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "side_thread_messages_side_thread_id_fkey"
+            columns: ["side_thread_id"]
+            isOneToOne: false
+            referencedRelation: "side_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      side_thread_participants: {
+        Row: {
+          id: string
+          joined_at: string
+          side_thread_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          side_thread_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          side_thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "side_thread_participants_side_thread_id_fkey"
+            columns: ["side_thread_id"]
+            isOneToOne: false
+            referencedRelation: "side_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      side_threads: {
+        Row: {
+          created_at: string
+          created_by: string
+          group_id: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          group_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "side_threads_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waitlist: {
         Row: {
           created_at: string
@@ -210,6 +309,10 @@ export type Database = {
     Functions: {
       is_group_member: {
         Args: { _group_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_side_thread_participant: {
+        Args: { _side_thread_id: string; _user_id: string }
         Returns: boolean
       }
       join_waitlist: {

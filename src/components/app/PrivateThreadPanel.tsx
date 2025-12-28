@@ -1,6 +1,6 @@
-import { useRef, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { PrivateThread, ThreadMessage, User } from '@/types/threadly';
+import { useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { PrivateThread, ThreadMessage, User } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
 import { X, Lock, Sparkles, Loader2 } from 'lucide-react';
 import ChatInput from './ChatInput';

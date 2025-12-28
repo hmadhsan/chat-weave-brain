@@ -1,10 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { v4 as uuidv4 } from 'uuid';
-import { PrivateThread, ThreadMessage, User, Group, Message } from '@/types/sidechat';
+import { User, Group, Message } from '@/types/sidechat';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroups, useMessages, useGroupMembers } from '@/hooks/useGroups';
+import { useSideThreads, useSideThreadMessages, DbSideThread } from '@/hooks/useSideThreads';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
@@ -22,6 +22,11 @@ const AppShell = () => {
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const { messages: dbMessages, sendMessage: dbSendMessage } = useMessages(activeGroupId);
   const { members: dbMembers } = useGroupMembers(activeGroupId);
+
+  // Side threads from database
+  const { threads: dbThreads, createThread: dbCreateThread } = useSideThreads(activeGroupId);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const { messages: threadMessages, sendMessage: sendThreadMessage } = useSideThreadMessages(activeThreadId);
 
   // Create a User object from the authenticated user
   const currentUser: User = useMemo(() => ({
@@ -73,6 +78,22 @@ const AppShell = () => {
     }));
   }, [dbMessages]);
 
+  // Get active thread object
+  const activeThread: DbSideThread | null = useMemo(() => {
+    return dbThreads.find(t => t.id === activeThreadId) || null;
+  }, [dbThreads, activeThreadId]);
+
+  // Convert thread messages to the format needed by PrivateThreadPanel
+  const currentThreadMessages = useMemo(() => {
+    return threadMessages.map(m => ({
+      id: m.id,
+      threadId: m.side_thread_id,
+      userId: m.user_id,
+      content: m.content,
+      createdAt: new Date(m.created_at),
+    }));
+  }, [threadMessages]);
+
   // Set initial active group
   useEffect(() => {
     if (!activeGroupId && groups.length > 0) {
@@ -85,24 +106,18 @@ const AppShell = () => {
     const pendingInvite = sessionStorage.getItem('pendingInvite');
     if (pendingInvite && user) {
       sessionStorage.removeItem('pendingInvite');
-      // Navigate to invite page - this is handled by the AcceptInvite component
     }
   }, [user]);
 
-  // Local state for threads (not persisted yet)
-  const [threads, setThreads] = useState<PrivateThread[]>([]);
-  const [activeThread, setActiveThread] = useState<PrivateThread | null>(null);
-  const [threadMessages, setThreadMessages] = useState<ThreadMessage[]>([]);
   const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isSendingToAI, setIsSendingToAI] = useState(false);
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
-  const currentThreadMessages = threadMessages.filter((m) => m.threadId === activeThread?.id);
 
   const handleSelectGroup = (groupId: string) => {
     setActiveGroupId(groupId);
-    setActiveThread(null);
+    setActiveThreadId(null);
   };
 
   const handleSendMessage = useCallback(async (content: string) => {
@@ -110,25 +125,15 @@ const AppShell = () => {
     await dbSendMessage(content);
   }, [activeGroupId, dbSendMessage]);
 
-  const handleCreateThread = (name: string, members: User[]) => {
+  const handleCreateThread = async (name: string, members: User[]) => {
     if (!activeGroupId) return;
 
-    const newThread: PrivateThread = {
-      id: uuidv4(),
-      groupId: activeGroupId,
-      name,
-      members,
-      createdAt: new Date(),
-      isActive: true,
-    };
-
-    setThreads((prev) => [...prev, newThread]);
-    setActiveThread(newThread);
+    const memberIds = members.map(m => m.id);
+    const newThread = await dbCreateThread(name, memberIds);
     
-    toast({
-      title: 'Private thread created',
-      description: `"${name}" is now active. Start brainstorming!`,
-    });
+    if (newThread) {
+      setActiveThreadId(newThread.id);
+    }
   };
 
   const handleCreateGroup = async (name: string) => {
@@ -138,19 +143,10 @@ const AppShell = () => {
     }
   };
 
-  const handleSendThreadMessage = useCallback((content: string) => {
-    if (!activeThread) return;
-
-    const newMessage: ThreadMessage = {
-      id: uuidv4(),
-      threadId: activeThread.id,
-      userId: currentUser.id,
-      content,
-      createdAt: new Date(),
-    };
-
-    setThreadMessages((prev) => [...prev, newMessage]);
-  }, [activeThread, currentUser.id]);
+  const handleSendThreadMessage = useCallback(async (content: string) => {
+    if (!activeThreadId) return;
+    await sendThreadMessage(content);
+  }, [activeThreadId, sendThreadMessage]);
 
   const handleSendToAI = async () => {
     if (!activeThread || !activeGroupId || currentThreadMessages.length === 0) return;
@@ -186,13 +182,13 @@ const AppShell = () => {
         throw new Error('No response from AI');
       }
 
-      // Insert AI message to database
+      // Insert AI message to database - this will appear via realtime
       const { error: insertError } = await supabase
         .from('messages')
         .insert({
           group_id: activeGroupId,
           user_id: user!.id,
-          content: aiContent,
+          content: `🤖 **AI Summary** from thread "${activeThread.name}":\n\n${aiContent}`,
           is_ai: true,
           thread_id: activeThread.id,
         });
@@ -201,7 +197,7 @@ const AppShell = () => {
         console.error('Error inserting AI message:', insertError);
       }
 
-      setActiveThread(null);
+      setActiveThreadId(null);
 
       toast({
         title: 'AI response posted',
@@ -220,7 +216,7 @@ const AppShell = () => {
   };
 
   const handleCloseThread = () => {
-    setActiveThread(null);
+    setActiveThreadId(null);
   };
 
   // Loading state
@@ -270,6 +266,16 @@ const AppShell = () => {
     );
   }
 
+  // Convert activeThread to the format expected by PrivateThreadPanel
+  const activeThreadForPanel = activeThread ? {
+    id: activeThread.id,
+    groupId: activeThread.group_id,
+    name: activeThread.name,
+    members: groupUsers,
+    createdAt: new Date(activeThread.created_at),
+    isActive: activeThread.is_active,
+  } : null;
+
   return (
     <div className="h-screen flex bg-background overflow-hidden">
       {/* Sidebar */}
@@ -288,15 +294,17 @@ const AppShell = () => {
         currentUserId={currentUser.id}
         onSendMessage={handleSendMessage}
         onStartThread={() => setIsThreadModalOpen(true)}
-        activeThread={activeThread}
+        activeThread={activeThreadForPanel}
         groupId={activeGroupId || undefined}
+        sideThreads={dbThreads}
+        onSelectThread={(threadId) => setActiveThreadId(threadId)}
       />
 
       {/* Private Thread Panel */}
       <AnimatePresence>
-        {activeThread && (
+        {activeThreadForPanel && (
           <PrivateThreadPanel
-            thread={activeThread}
+            thread={activeThreadForPanel}
             messages={currentThreadMessages}
             users={groupUsers}
             currentUserId={currentUser.id}

@@ -43,7 +43,7 @@ const CreateThreadModal = ({
   };
 
   const handleCreate = () => {
-    if (threadName.trim() && selectedMembers.length >= 2) {
+    if (threadName.trim() && selectedMembers.length >= 1) {
       onCreate(threadName.trim(), selectedMembers);
       setThreadName('');
       setSelectedMembers([currentUser]);
@@ -136,7 +136,7 @@ const CreateThreadModal = ({
           </Button>
           <Button
             onClick={handleCreate}
-            disabled={!threadName.trim() || selectedMembers.length < 2}
+            disabled={!threadName.trim() || selectedMembers.length < 1}
           >
             Create Thread
           </Button>

@@ -1,12 +1,18 @@
 import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Group, Message, User, PrivateThread } from '@/types/threadly';
+import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash, UserPlus } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus, Lock } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
 import InviteMemberModal from './InviteMemberModal';
+
+interface SideThreadItem {
+  id: string;
+  name: string;
+  is_active: boolean;
+}
 
 interface GroupChatProps {
   group: Group;
@@ -17,6 +23,8 @@ interface GroupChatProps {
   onStartThread: () => void;
   activeThread?: PrivateThread | null;
   groupId?: string;
+  sideThreads?: SideThreadItem[];
+  onSelectThread?: (threadId: string) => void;
 }
 
 const GroupChat = ({
@@ -28,6 +36,8 @@ const GroupChat = ({
   onStartThread,
   activeThread,
   groupId,
+  sideThreads = [],
+  onSelectThread,
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -93,6 +103,27 @@ const GroupChat = ({
           </Button>
         </div>
       </div>
+
+      {/* Side Threads Bar */}
+      {sideThreads.length > 0 && (
+        <div className="px-4 py-2 border-b border-border bg-card/30 flex items-center gap-2 overflow-x-auto">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Threads:</span>
+          {sideThreads.map((thread) => (
+            <button
+              key={thread.id}
+              onClick={() => onSelectThread?.(thread.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                activeThread?.id === thread.id
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground'
+              }`}
+            >
+              <Lock className="w-3 h-3" />
+              {thread.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto">
