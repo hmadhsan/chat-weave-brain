@@ -2,11 +2,14 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { PrivateThread, ThreadMessage, User } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { X, Lock, Sparkles, Loader2, MoreVertical, Pencil, Trash2, Check, Pin, PinOff } from 'lucide-react';
+import { X, Lock, Sparkles, Loader2, MoreVertical, Pencil, Trash2, Check, Pin, PinOff, Reply } from 'lucide-react';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
 import TypingIndicator from './TypingIndicator';
+import FileAttachment from './FileAttachment';
+import ReadReceipts from './ReadReceipts';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
+import { useSideThreadReadReceipts } from '@/hooks/useReadReceipts';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,7 +36,7 @@ interface PrivateThreadPanelProps {
   users: User[];
   currentUserId: string;
   onClose: () => void;
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, replyToId?: string | null, file?: { url: string; name: string; type: string; size: number } | null) => void;
   onSendToAI: () => void;
   onEditMessage?: (messageId: string, newContent: string) => Promise<boolean>;
   onDeleteMessage?: (messageId: string) => Promise<boolean>;
@@ -59,6 +62,7 @@ const PrivateThreadPanel = ({
   const [editContent, setEditContent] = useState('');
   const [messageToDelete, setMessageToDelete] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [replyTo, setReplyTo] = useState<{ id: string; content: string; userId: string } | null>(null);
   const { profile } = useAuth();
 
   // Typing indicator
@@ -67,6 +71,20 @@ const PrivateThreadPanel = ({
     `thread:${thread.id}`,
     currentUserName
   );
+
+  // Read receipts - get all message IDs for tracking
+  const messageIds = useMemo(() => messages.map(m => m.id), [messages]);
+  const { getReadBy, markAsRead } = useSideThreadReadReceipts(messageIds);
+
+  // Mark last message as read when viewing
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.userId !== currentUserId) {
+        markAsRead(lastMessage.id);
+      }
+    }
+  }, [messages, currentUserId, markAsRead]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -109,6 +127,19 @@ const PrivateThreadPanel = ({
     await onDeleteMessage(messageToDelete);
     setIsLoading(false);
     setMessageToDelete(null);
+  };
+
+  const handleReply = (message: ThreadMessage) => {
+    setReplyTo({
+      id: message.id,
+      content: message.content,
+      userId: message.userId,
+    });
+  };
+
+  const handleSendMessage = (content: string, file?: { url: string; name: string; type: string; size: number } | null) => {
+    onSendMessage(content, replyTo?.id || null, file);
+    setReplyTo(null);
   };
 
   return (
@@ -160,10 +191,13 @@ const PrivateThreadPanel = ({
             </p>
           </div>
         ) : (
-          messages.map((message) => {
+          messages.map((message, index) => {
             const user = getUserById(message.userId);
             const isOwn = message.userId === currentUserId;
             const isEditing = editingMessageId === message.id;
+            const isPinned = (message as any).is_pinned;
+            const replyToMessage = message.replyTo;
+            const replyUser = replyToMessage ? getUserById(replyToMessage.userId) : null;
             
             return (
               <motion.div
@@ -181,7 +215,20 @@ const PrivateThreadPanel = ({
                     <span className="text-xs text-muted-foreground">
                       {format(message.createdAt, 'h:mm a')}
                     </span>
+                    {isPinned && (
+                      <Pin className="w-3 h-3 text-primary" />
+                    )}
                   </div>
+
+                  {/* Reply Preview */}
+                  {replyToMessage && (
+                    <div className="mt-1 mb-1 pl-2 border-l-2 border-primary/30 text-xs text-muted-foreground">
+                      <span className="font-medium text-foreground/70">
+                        {replyUser?.name || 'Unknown'}:
+                      </span>{' '}
+                      <span className="line-clamp-1">{replyToMessage.content}</span>
+                    </div>
+                  )}
                   
                   {isEditing ? (
                     <div className="mt-1 space-y-2">
@@ -214,14 +261,42 @@ const PrivateThreadPanel = ({
                       </div>
                     </div>
                   ) : (
-                    <p className="text-sm text-foreground/90 mt-0.5">
-                      {message.content}
-                    </p>
+                    <>
+                      {message.content && (
+                        <p className="text-sm text-foreground/90 mt-0.5">
+                          {message.content}
+                        </p>
+                      )}
+                      
+                      {/* File Attachment */}
+                      {message.fileUrl && (
+                        <div className="mt-2">
+                          <FileAttachment
+                            fileUrl={message.fileUrl}
+                            fileName={message.fileName || 'File'}
+                            fileType={message.fileType || 'application/octet-stream'}
+                            fileSize={message.fileSize || 0}
+                          />
+                        </div>
+                      )}
+
+                      {/* Read Receipts for own messages */}
+                      {isOwn && (
+                        <div className="mt-1">
+                          <ReadReceipts 
+                            readBy={getReadBy(message.id)} 
+                            users={users} 
+                            isOwn={isOwn}
+                            totalMembers={thread.members.length}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
                 
-                {/* Edit/Delete Menu */}
-                {isOwn && !isEditing && (onEditMessage || onDeleteMessage) && (
+                {/* Edit/Delete/Reply Menu */}
+                {!isEditing && (onEditMessage || onDeleteMessage || onTogglePin) && (
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -229,14 +304,33 @@ const PrivateThreadPanel = ({
                           <MoreVertical className="w-3 h-3" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {onEditMessage && (
+                      <DropdownMenuContent align="end" className="bg-popover z-50">
+                        <DropdownMenuItem onClick={() => handleReply(message)}>
+                          <Reply className="w-3 h-3 mr-2" />
+                          Reply
+                        </DropdownMenuItem>
+                        {onTogglePin && (
+                          <DropdownMenuItem onClick={() => onTogglePin(message.id)}>
+                            {isPinned ? (
+                              <>
+                                <PinOff className="w-3 h-3 mr-2" />
+                                Unpin
+                              </>
+                            ) : (
+                              <>
+                                <Pin className="w-3 h-3 mr-2" />
+                                Pin
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                        )}
+                        {isOwn && onEditMessage && (
                           <DropdownMenuItem onClick={() => handleStartEdit(message)}>
                             <Pencil className="w-3 h-3 mr-2" />
                             Edit
                           </DropdownMenuItem>
                         )}
-                        {onDeleteMessage && (
+                        {isOwn && onDeleteMessage && (
                           <DropdownMenuItem 
                             onClick={() => setMessageToDelete(message.id)}
                             className="text-destructive focus:text-destructive"
@@ -285,11 +379,14 @@ const PrivateThreadPanel = ({
 
       {/* Input */}
       <ChatInput
-        onSend={onSendMessage}
+        onSend={handleSendMessage}
         placeholder="Brainstorm ideas..."
         disabled={isSendingToAI}
         onTyping={startTyping}
         onStopTyping={stopTyping}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
+        users={users}
       />
 
       {/* Delete Confirmation Dialog */}
