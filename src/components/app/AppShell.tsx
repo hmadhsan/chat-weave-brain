@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { User, Group, Message } from '@/types/sidechat';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +7,8 @@ import { useGroups, useMessages, useGroupMembers } from '@/hooks/useGroups';
 import { useSideThreads, useSideThreadMessages, DbSideThread } from '@/hooks/useSideThreads';
 import { useAllSideThreads } from '@/hooks/useAllSideThreads';
 import { usePendingInvitations } from '@/hooks/usePendingInvitations';
+import { useUnreadMessages } from '@/hooks/useUnreadMessages';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
@@ -36,6 +38,14 @@ const AppShell = () => {
   // All threads for sidebar (across all groups)
   const groupIds = useMemo(() => dbGroups.map(g => g.id), [dbGroups]);
   const { threads: allThreads } = useAllSideThreads(groupIds);
+  
+  // Unread messages tracking
+  const threadIds = useMemo(() => allThreads.map(t => t.id), [allThreads]);
+  const { getUnreadCount, markAsRead } = useUnreadMessages(groupIds, threadIds);
+  
+  // Notification sound
+  const { play: playNotificationSound } = useNotificationSound();
+  const prevMessageCount = useRef<number>(0);
 
   // Create a User object from the authenticated user
   const currentUser: User = useMemo(() => ({
@@ -163,6 +173,32 @@ const AppShell = () => {
     }
   }, [groups, activeGroupId]);
 
+  // Play notification sound for new messages
+  useEffect(() => {
+    if (prevMessageCount.current > 0 && dbMessages.length > prevMessageCount.current) {
+      // Check if the new message is from someone else
+      const latestMessage = dbMessages[dbMessages.length - 1];
+      if (latestMessage && latestMessage.user_id !== user?.id) {
+        playNotificationSound();
+      }
+    }
+    prevMessageCount.current = dbMessages.length;
+  }, [dbMessages, user?.id, playNotificationSound]);
+
+  // Mark group as read when selected
+  useEffect(() => {
+    if (activeGroupId) {
+      markAsRead('group', activeGroupId);
+    }
+  }, [activeGroupId, markAsRead]);
+
+  // Mark thread as read when selected
+  useEffect(() => {
+    if (activeThreadId) {
+      markAsRead('thread', activeThreadId);
+    }
+  }, [activeThreadId, markAsRead]);
+
   // Check for pending invite after auth
   useEffect(() => {
     const pendingInvite = sessionStorage.getItem('pendingInvite');
@@ -180,6 +216,7 @@ const AppShell = () => {
   const handleSelectGroup = (groupId: string) => {
     setActiveGroupId(groupId);
     setActiveThreadId(null);
+    markAsRead('group', groupId);
   };
 
   const handleAcceptInvitation = async (token: string) => {
@@ -407,7 +444,11 @@ const AppShell = () => {
         invitationsLoading={invitationsLoading}
         sideThreads={allThreads.map(t => ({ ...t, group_id: t.group_id }))}
         activeThreadId={activeThreadId}
-        onSelectThread={(threadId) => setActiveThreadId(threadId)}
+        onSelectThread={(threadId) => {
+          setActiveThreadId(threadId);
+          markAsRead('thread', threadId);
+        }}
+        getUnreadCount={getUnreadCount}
       />
 
       {/* Main Chat */}

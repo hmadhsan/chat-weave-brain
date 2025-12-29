@@ -13,6 +13,7 @@ interface MessageSearchProps {
   onClose: () => void;
   onMessageClick?: (messageId: string) => void;
   groupName?: string;
+  scrollToMessage?: (messageId: string) => void;
 }
 
 const MessageSearch = ({ 
@@ -20,9 +21,16 @@ const MessageSearch = ({
   users, 
   onClose, 
   onMessageClick,
-  groupName 
+  groupName,
+  scrollToMessage 
 }: MessageSearchProps) => {
   const [query, setQuery] = useState('');
+
+  const handleMessageClick = (messageId: string) => {
+    onMessageClick?.(messageId);
+    scrollToMessage?.(messageId);
+    onClose();
+  };
 
   const getUserById = (userId: string) => users.find(u => u.id === userId);
 
@@ -96,7 +104,7 @@ const MessageSearch = ({
                 return (
                   <button
                     key={message.id}
-                    onClick={() => onMessageClick?.(message.id)}
+                    onClick={() => handleMessageClick(message.id)}
                     className={cn(
                       "w-full text-left p-3 rounded-lg border border-border bg-card hover:bg-secondary/50 transition-colors",
                       "focus:outline-none focus:ring-2 focus:ring-primary/50"
