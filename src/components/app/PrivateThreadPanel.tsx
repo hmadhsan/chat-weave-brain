@@ -171,9 +171,12 @@ const PrivateThreadPanel = ({
           <span>{thread.members.length} members</span>
         </div>
         
-        <div className="flex -space-x-1.5 mt-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2">
           {thread.members.map((member) => (
-            <UserAvatar key={member.id} user={member} size="sm" />
+            <div key={member.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary/50">
+              <UserAvatar user={member} size="sm" showStatus />
+              <span className="text-xs text-foreground">{member.name}</span>
+            </div>
           ))}
         </div>
       </div>
@@ -365,12 +368,12 @@ const PrivateThreadPanel = ({
             {isSendingToAI ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Sending to AI...
+                Summarising...
               </>
             ) : (
               <>
                 <Sparkles className="w-4 h-4" />
-                Send to AI
+                Summarise & Send to Group
               </>
             )}
           </Button>
