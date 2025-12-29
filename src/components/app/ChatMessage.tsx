@@ -35,6 +35,7 @@ interface ChatMessageProps {
   message: Message & { is_pinned?: boolean };
   user?: User;
   isOwn?: boolean;
+  isUserOnline?: boolean;
   onEdit?: (messageId: string, newContent: string) => Promise<boolean>;
   onDelete?: (messageId: string) => Promise<boolean>;
   onTogglePin?: (messageId: string) => Promise<boolean>;
@@ -51,7 +52,8 @@ interface ChatMessageProps {
 const ChatMessage = ({ 
   message, 
   user, 
-  isOwn, 
+  isOwn,
+  isUserOnline,
   onEdit, 
   onDelete,
   onTogglePin,
@@ -194,7 +196,7 @@ const ChatMessage = ({
           </div>
         )}
 
-        <UserAvatar user={user} isAI={isAI} showStatus />
+        <UserAvatar user={user} isAI={isAI} showStatus isOnline={isUserOnline} />
         
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">

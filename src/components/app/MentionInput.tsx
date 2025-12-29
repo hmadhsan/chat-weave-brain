@@ -172,8 +172,8 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
         disabled={disabled}
         rows={1}
         className={cn(
-          "w-full bg-transparent resize-none outline-none text-sm text-foreground placeholder:text-muted-foreground",
-          "min-h-[24px] max-h-32 py-2 leading-relaxed whitespace-pre-wrap break-words",
+          "w-full bg-transparent resize-none border-none outline-none ring-0 focus:ring-0 focus:outline-none text-sm text-foreground placeholder:text-muted-foreground",
+          "min-h-[24px] max-h-32 py-1.5 leading-relaxed whitespace-pre-wrap break-words",
           className
         )}
       />
