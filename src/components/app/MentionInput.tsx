@@ -6,7 +6,7 @@ import UserAvatar from './UserAvatar';
 interface MentionInputProps {
   value: string;
   onChange: (value: string) => void;
-  onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onSend?: () => void;
   onBlur?: () => void;
   placeholder?: string;
   disabled?: boolean;
@@ -22,7 +22,7 @@ export interface MentionInputRef {
 const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
   value,
   onChange,
-  onKeyDown,
+  onSend,
   onBlur,
   placeholder,
   disabled,
@@ -44,8 +44,16 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
     u.name.toLowerCase().includes(mentionSearch.toLowerCase())
   ).slice(0, 5);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 128)}px`;
+    }
+  }, [value]);
+
   const checkForMention = (text: string, cursorPos: number) => {
-    // Find the @ symbol before the cursor
     const textBeforeCursor = text.slice(0, cursorPos);
     const lastAtIndex = textBeforeCursor.lastIndexOf('@');
     
@@ -54,7 +62,6 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
       return;
     }
 
-    // Check if @ is at start or preceded by whitespace
     if (lastAtIndex > 0 && !/\s/.test(textBeforeCursor[lastAtIndex - 1])) {
       setShowMentions(false);
       return;
@@ -62,7 +69,6 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
 
     const searchText = textBeforeCursor.slice(lastAtIndex + 1);
     
-    // Don't show if there's a space in the search (already completed)
     if (searchText.includes(' ')) {
       setShowMentions(false);
       return;
@@ -84,7 +90,6 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
     onChange(newValue);
     setShowMentions(false);
     
-    // Focus back and set cursor position
     setTimeout(() => {
       if (textareaRef.current) {
         const newPos = lastAtIndex + user.name.length + 2;
@@ -103,6 +108,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Handle mentions navigation
     if (showMentions && filteredUsers.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
@@ -129,8 +135,14 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
         return;
       }
     }
-    // Allow Shift+Enter for new lines (pass through to parent)
-    onKeyDown?.(e);
+    
+    // Send message on Enter (without Shift)
+    if (e.key === 'Enter' && !e.shiftKey && !showMentions) {
+      e.preventDefault();
+      onSend?.();
+      return;
+    }
+    // Shift+Enter adds a new line (default behavior)
   };
 
   const handleClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
@@ -139,7 +151,6 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
     checkForMention(value, cursorPos);
   };
 
-  // Close mentions on click outside
   useEffect(() => {
     const handleClickOutside = () => setShowMentions(false);
     if (showMentions) {
@@ -162,10 +173,9 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
         rows={1}
         className={cn(
           "w-full bg-transparent resize-none outline-none text-sm text-foreground placeholder:text-muted-foreground",
-          "min-h-[24px] max-h-32",
+          "min-h-[24px] max-h-32 py-2 leading-relaxed",
           className
         )}
-        style={{ height: 'auto' }}
       />
       
       {/* Mentions Dropdown */}
