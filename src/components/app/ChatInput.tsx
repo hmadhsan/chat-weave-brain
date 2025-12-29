@@ -1,4 +1,4 @@
-import { useState, useRef, KeyboardEvent } from 'react';
+import { useState, useRef } from 'react';
 import { Send, Smile, Paperclip, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -73,22 +73,15 @@ const ChatInput = ({
 
     if (selectedFile) {
       uploadedFile = await uploadFile(selectedFile);
-      if (!uploadedFile && !content.trim()) return; // Upload failed and no text
+      if (!uploadedFile && !content.trim()) return;
     }
 
-    onSend(content.trim() || (uploadedFile ? '' : ''), uploadedFile);
+    onSend(content.trim() || '', uploadedFile);
     setContent('');
     setSelectedFile(null);
     setPreviewUrl(null);
     if (onStopTyping) {
       onStopTyping();
-    }
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -103,7 +96,6 @@ const ChatInput = ({
 
     setSelectedFile(file);
 
-    // Create preview for images
     if (file.type.startsWith('image/')) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
@@ -126,7 +118,7 @@ const ChatInput = ({
   const isImage = selectedFile?.type.startsWith('image/');
 
   return (
-    <div className="border-t border-border bg-card/50">
+    <div className="border-t border-border bg-card/50 backdrop-blur-sm">
       {/* Reply Preview */}
       {replyTo && onCancelReply && (
         <ReplyPreview replyTo={replyTo} users={users} onCancel={onCancelReply} />
@@ -135,12 +127,12 @@ const ChatInput = ({
       {/* File Preview */}
       {selectedFile && (
         <div className="px-4 pt-3">
-          <div className="flex items-center gap-3 p-2 bg-secondary/50 rounded-lg max-w-xs">
+          <div className="flex items-center gap-3 p-3 bg-secondary/50 rounded-xl max-w-xs border border-border/50">
             {isImage && previewUrl ? (
-              <img src={previewUrl} alt="Preview" className="w-12 h-12 object-cover rounded" />
+              <img src={previewUrl} alt="Preview" className="w-14 h-14 object-cover rounded-lg" />
             ) : (
-              <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center">
-                <Paperclip className="w-5 h-5 text-primary" />
+              <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Paperclip className="w-6 h-6 text-primary" />
               </div>
             )}
             <div className="flex-1 min-w-0">
@@ -152,7 +144,7 @@ const ChatInput = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 shrink-0"
+              className="h-7 w-7 shrink-0 hover:bg-destructive/10 hover:text-destructive"
               onClick={handleRemoveFile}
             >
               <X className="w-4 h-4" />
@@ -162,7 +154,12 @@ const ChatInput = ({
       )}
 
       <div className="p-4">
-        <div className="flex items-end gap-2 bg-secondary/50 rounded-xl p-2">
+        <div className={cn(
+          "flex items-end gap-2 rounded-2xl border border-border/50 bg-background/80 backdrop-blur-sm",
+          "shadow-sm hover:shadow-md transition-shadow duration-200",
+          "focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10",
+          "px-3 py-2"
+        )}>
           {/* File Upload */}
           <input
             ref={fileInputRef}
@@ -174,7 +171,7 @@ const ChatInput = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="shrink-0"
+            className="shrink-0 h-9 w-9 rounded-xl hover:bg-secondary/80"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isUploading}
           >
@@ -183,7 +180,7 @@ const ChatInput = ({
 
           <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="shrink-0">
+              <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 rounded-xl hover:bg-secondary/80">
                 <Smile className="w-5 h-5 text-muted-foreground" />
               </Button>
             </PopoverTrigger>
@@ -210,7 +207,7 @@ const ChatInput = ({
           <MentionInput
             value={content}
             onChange={handleChange}
-            onKeyDown={handleKeyDown}
+            onSend={handleSend}
             onBlur={onStopTyping}
             placeholder={placeholder}
             disabled={disabled || isUploading}
@@ -221,7 +218,7 @@ const ChatInput = ({
             onClick={handleSend}
             disabled={(!content.trim() && !selectedFile) || disabled || isUploading}
             size="icon"
-            className="shrink-0"
+            className="shrink-0 h-9 w-9 rounded-xl"
           >
             {isUploading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -230,6 +227,9 @@ const ChatInput = ({
             )}
           </Button>
         </div>
+        <p className="text-[10px] text-muted-foreground mt-1.5 ml-1">
+          Press Enter to send • Shift+Enter for new line • @ to mention
+        </p>
       </div>
     </div>
   );
