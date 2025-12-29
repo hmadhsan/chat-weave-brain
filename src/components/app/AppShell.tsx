@@ -86,18 +86,35 @@ const AppShell = () => {
     }));
   }, [dbGroups, groupUsers]);
 
-  // Convert db messages to Message format
+  // Convert db messages to Message format with replies
   const groupMessages = useMemo(() => {
-    return dbMessages.map(m => ({
-      id: m.id,
-      groupId: m.group_id,
-      userId: m.user_id,
-      content: m.content,
-      createdAt: new Date(m.created_at),
-      isAI: m.is_ai,
-      threadId: m.thread_id || undefined,
-      is_pinned: m.is_pinned,
-    }));
+    const messageMap = new Map(dbMessages.map(m => [m.id, m]));
+    
+    return dbMessages.map(m => {
+      const replyTo = m.reply_to_id ? messageMap.get(m.reply_to_id) : null;
+      return {
+        id: m.id,
+        groupId: m.group_id,
+        userId: m.user_id,
+        content: m.content,
+        createdAt: new Date(m.created_at),
+        isAI: m.is_ai,
+        threadId: m.thread_id || undefined,
+        is_pinned: m.is_pinned,
+        replyToId: m.reply_to_id || undefined,
+        replyTo: replyTo ? {
+          id: replyTo.id,
+          groupId: replyTo.group_id,
+          userId: replyTo.user_id,
+          content: replyTo.content,
+          createdAt: new Date(replyTo.created_at),
+        } : undefined,
+        fileUrl: m.file_url || undefined,
+        fileName: m.file_name || undefined,
+        fileType: m.file_type || undefined,
+        fileSize: m.file_size || undefined,
+      };
+    });
   }, [dbMessages]);
 
   // Get active thread object
@@ -105,15 +122,33 @@ const AppShell = () => {
     return dbThreads.find(t => t.id === activeThreadId) || null;
   }, [dbThreads, activeThreadId]);
 
-  // Convert thread messages to the format needed by PrivateThreadPanel
+  // Convert thread messages to the format needed by PrivateThreadPanel with replies
   const currentThreadMessages = useMemo(() => {
-    return threadMessages.map(m => ({
-      id: m.id,
-      threadId: m.side_thread_id,
-      userId: m.user_id,
-      content: m.content,
-      createdAt: new Date(m.created_at),
-    }));
+    const messageMap = new Map(threadMessages.map(m => [m.id, m]));
+    
+    return threadMessages.map(m => {
+      const replyTo = m.reply_to_id ? messageMap.get(m.reply_to_id) : null;
+      return {
+        id: m.id,
+        threadId: m.side_thread_id,
+        userId: m.user_id,
+        content: m.content,
+        createdAt: new Date(m.created_at),
+        is_pinned: m.is_pinned,
+        replyToId: m.reply_to_id || undefined,
+        replyTo: replyTo ? {
+          id: replyTo.id,
+          threadId: replyTo.side_thread_id,
+          userId: replyTo.user_id,
+          content: replyTo.content,
+          createdAt: new Date(replyTo.created_at),
+        } : undefined,
+        fileUrl: m.file_url || undefined,
+        fileName: m.file_name || undefined,
+        fileType: m.file_type || undefined,
+        fileSize: m.file_size || undefined,
+      };
+    });
   }, [threadMessages]);
 
   // Set initial active group
@@ -186,9 +221,13 @@ const AppShell = () => {
     }
   };
 
-  const handleSendThreadMessage = useCallback(async (content: string) => {
+  const handleSendThreadMessage = useCallback(async (
+    content: string,
+    replyToId?: string | null,
+    file?: { url: string; name: string; type: string; size: number } | null
+  ) => {
     if (!activeThreadId) return;
-    await sendThreadMessage(content);
+    await sendThreadMessage(content, replyToId, file);
   }, [activeThreadId, sendThreadMessage]);
 
   const handleSendToAI = async () => {
@@ -373,6 +412,7 @@ const AppShell = () => {
             onSendToAI={handleSendToAI}
             onEditMessage={editThreadMessage}
             onDeleteMessage={deleteThreadMessage}
+            onTogglePin={toggleThreadPin}
             isSendingToAI={isSendingToAI}
           />
         )}
