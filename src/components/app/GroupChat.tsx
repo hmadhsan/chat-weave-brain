@@ -13,6 +13,7 @@ import ForwardMessageModal from './ForwardMessageModal';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
 import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
+import { usePresence } from '@/hooks/usePresence';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -102,6 +103,9 @@ const GroupChat = ({
 
   // Read receipts
   const { markAsRead, getReadBy } = useMessageReadReceipts(messageIds);
+
+  // Presence tracking
+  const { isOnline } = usePresence(groupId ? `group:${groupId}` : '');
 
   // Pinned messages
   const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
@@ -223,7 +227,7 @@ const GroupChat = ({
                 <Tooltip key={member.id}>
                   <TooltipTrigger asChild>
                     <div>
-                      <UserAvatar user={member} size="sm" showStatus />
+                      <UserAvatar user={member} size="sm" showStatus isOnline={isOnline(member.id)} />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent side="bottom">
@@ -284,7 +288,7 @@ const GroupChat = ({
               <div className="max-h-64 overflow-y-auto py-1">
                 {group.members.map((member) => (
                   <div key={member.id} className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50">
-                    <UserAvatar user={member} size="sm" showStatus />
+                    <UserAvatar user={member} size="sm" showStatus isOnline={isOnline(member.id)} />
                     <div className="flex flex-col min-w-0">
                       <span className="text-sm font-medium text-foreground truncate">{member.name}</span>
                       <span className="text-xs text-muted-foreground truncate">{member.email}</span>

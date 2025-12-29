@@ -7,9 +7,10 @@ interface UserAvatarProps {
   isAI?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showStatus?: boolean;
+  isOnline?: boolean;
 }
 
-const UserAvatar = ({ user, isAI, size = 'md', showStatus = false }: UserAvatarProps) => {
+const UserAvatar = ({ user, isAI, size = 'md', showStatus = false, isOnline }: UserAvatarProps) => {
   const sizeClasses = {
     sm: 'w-6 h-6 text-xs',
     md: 'w-8 h-8 text-sm',
@@ -17,16 +18,13 @@ const UserAvatar = ({ user, isAI, size = 'md', showStatus = false }: UserAvatarP
   };
 
   const statusSizeClasses = {
-    sm: 'w-2 h-2 -right-0.5 -bottom-0.5',
-    md: 'w-2.5 h-2.5 -right-0.5 -bottom-0.5',
-    lg: 'w-3 h-3 -right-0.5 -bottom-0.5',
+    sm: 'w-2.5 h-2.5',
+    md: 'w-3 h-3',
+    lg: 'w-3.5 h-3.5',
   };
 
-  const statusColors = {
-    online: 'bg-green-500',
-    away: 'bg-yellow-500',
-    offline: 'bg-gray-400',
-  };
+  // Use passed isOnline prop, otherwise fall back to user.status
+  const statusOnline = isOnline !== undefined ? isOnline : user?.status === 'online';
 
   if (isAI) {
     return (
@@ -62,12 +60,18 @@ const UserAvatar = ({ user, isAI, size = 'md', showStatus = false }: UserAvatarP
           initials
         )}
       </div>
-      {showStatus && user && (
-        <div className={cn(
-          "absolute rounded-full border-2 border-card",
-          statusSizeClasses[size],
-          statusColors[user.status]
-        )} />
+      {showStatus && (
+        <div 
+          className={cn(
+            "absolute rounded-full border-2 border-card",
+            statusSizeClasses[size],
+            statusOnline ? 'bg-green-500' : 'bg-gray-400'
+          )}
+          style={{
+            bottom: size === 'sm' ? '-2px' : '-1px',
+            right: size === 'sm' ? '-2px' : '-1px',
+          }}
+        />
       )}
     </div>
   );
