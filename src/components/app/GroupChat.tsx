@@ -2,12 +2,14 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
 import InviteMemberModal from './InviteMemberModal';
 import TypingIndicator from './TypingIndicator';
+import MessageSearch from './MessageSearch';
+import ForwardMessageModal from './ForwardMessageModal';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
 import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
@@ -51,6 +53,8 @@ interface GroupChatProps {
   sideThreads?: SideThreadItem[];
   onSelectThread?: (threadId: string) => void;
   onDeleteThread?: (threadId: string) => void;
+  onForwardMessage?: (content: string, targetId: string, targetType: 'group' | 'thread') => Promise<void>;
+  allGroups?: { id: string; name: string }[];
 }
 
 const GroupChat = ({
@@ -68,12 +72,16 @@ const GroupChat = ({
   sideThreads = [],
   onSelectThread,
   onDeleteThread,
+  onForwardMessage,
+  allGroups = [],
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [messageToForward, setMessageToForward] = useState<Message | null>(null);
   const { profile } = useAuth();
 
   // Typing indicator
@@ -162,6 +170,16 @@ const GroupChat = ({
     setReplyTo(message);
   };
 
+  const handleForward = (message: Message) => {
+    setMessageToForward(message);
+  };
+
+  const handleForwardSubmit = async (targetId: string, targetType: 'group' | 'thread') => {
+    if (messageToForward && onForwardMessage) {
+      await onForwardMessage(messageToForward.content, targetId, targetType);
+    }
+  };
+
   const handleSendMessage = (content: string, file?: { url: string; name: string; type: string; size: number } | null) => {
     onSendMessage(content, replyTo?.id || null, file);
     setReplyTo(null);
@@ -211,6 +229,10 @@ const GroupChat = ({
           >
             <MessageSquarePlus className="w-4 h-4" />
             Private Thread
+          </Button>
+
+          <Button variant="ghost" size="icon" onClick={() => setShowSearch(true)}>
+            <Search className="w-4 h-4" />
           </Button>
 
           <Button variant="ghost" size="icon">
@@ -324,6 +346,7 @@ const GroupChat = ({
                     onDelete={onDeleteMessage}
                     onTogglePin={onTogglePin}
                     onReply={handleReply}
+                    onForward={onForwardMessage ? handleForward : undefined}
                     reactions={getReactionGroups(message.id)}
                     onToggleReaction={handleToggleReaction}
                     readBy={getReadBy(message.id)}

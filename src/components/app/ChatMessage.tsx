@@ -4,7 +4,7 @@ import { Message, User } from '@/types/sidechat';
 import UserAvatar from './UserAvatar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Sparkles, MoreVertical, Pencil, Trash2, X, Check, Pin, PinOff, Reply } from 'lucide-react';
+import { Sparkles, MoreVertical, Pencil, Trash2, X, Check, Pin, PinOff, Reply, Forward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -39,6 +39,7 @@ interface ChatMessageProps {
   onDelete?: (messageId: string) => Promise<boolean>;
   onTogglePin?: (messageId: string) => Promise<boolean>;
   onReply?: (message: Message) => void;
+  onForward?: (message: Message) => void;
   reactions?: ReactionGroup[];
   onToggleReaction?: (messageId: string, emoji: string) => void;
   readBy?: ReadReceipt[];
@@ -55,6 +56,7 @@ const ChatMessage = ({
   onDelete,
   onTogglePin,
   onReply,
+  onForward,
   reactions = [],
   onToggleReaction,
   readBy = [],
@@ -111,6 +113,12 @@ const ChatMessage = ({
   const handleReply = () => {
     if (onReply) {
       onReply(message);
+    }
+  };
+
+  const handleForward = () => {
+    if (onForward) {
+      onForward(message);
     }
   };
 
@@ -295,7 +303,7 @@ const ChatMessage = ({
             )}
 
             {/* Edit/Delete/Pin/Reply Menu */}
-            {(isOwn || onTogglePin || onReply) && !isAI && (onEdit || onDelete || onTogglePin || onReply) && (
+            {(isOwn || onTogglePin || onReply || onForward) && !isAI && (onEdit || onDelete || onTogglePin || onReply || onForward) && (
               <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -308,6 +316,12 @@ const ChatMessage = ({
                       <DropdownMenuItem onClick={handleReply}>
                         <Reply className="w-4 h-4 mr-2" />
                         Reply
+                      </DropdownMenuItem>
+                    )}
+                    {onForward && (
+                      <DropdownMenuItem onClick={handleForward}>
+                        <Forward className="w-4 h-4 mr-2" />
+                        Forward
                       </DropdownMenuItem>
                     )}
                     {onTogglePin && (
