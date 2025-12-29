@@ -212,16 +212,34 @@ const GroupChat = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex -space-x-2 mr-2">
-            {group.members.slice(0, 4).map((member) => (
-              <UserAvatar key={member.id} user={member} size="sm" />
-            ))}
-            {group.members.length > 4 && (
-              <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs text-muted-foreground">
-                +{group.members.length - 4}
-              </div>
-            )}
-          </div>
+          <TooltipProvider>
+            <div className="flex -space-x-2 mr-2">
+              {group.members.slice(0, 4).map((member) => (
+                <Tooltip key={member.id}>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <UserAvatar user={member} size="sm" showStatus />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>{member.name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+              {group.members.length > 4 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center text-xs text-muted-foreground cursor-pointer">
+                      +{group.members.length - 4}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>{group.members.slice(4).map(m => m.name).join(', ')}</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </TooltipProvider>
 
           <Button
             variant="outline"

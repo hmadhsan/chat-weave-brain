@@ -17,15 +17,15 @@ const UserAvatar = ({ user, isAI, size = 'md', showStatus = false }: UserAvatarP
   };
 
   const statusSizeClasses = {
-    sm: 'w-2 h-2 right-0 bottom-0',
-    md: 'w-2.5 h-2.5 right-0 bottom-0',
-    lg: 'w-3 h-3 right-0 bottom-0',
+    sm: 'w-2 h-2 -right-0.5 -bottom-0.5',
+    md: 'w-2.5 h-2.5 -right-0.5 -bottom-0.5',
+    lg: 'w-3 h-3 -right-0.5 -bottom-0.5',
   };
 
   const statusColors = {
     online: 'bg-green-500',
     away: 'bg-yellow-500',
-    offline: 'bg-muted-foreground',
+    offline: 'bg-gray-400',
   };
 
   if (isAI) {
