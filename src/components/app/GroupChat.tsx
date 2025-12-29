@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
@@ -111,6 +111,18 @@ const GroupChat = ({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const scrollToMessage = useCallback((messageId: string) => {
+    const element = messagesContainerRef.current?.querySelector(`[data-message-id="${messageId}"]`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Highlight the message briefly
+      element.classList.add('bg-primary/20');
+      setTimeout(() => {
+        element.classList.remove('bg-primary/20');
+      }, 2000);
+    }
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
@@ -425,6 +437,7 @@ const GroupChat = ({
           users={users}
           onClose={() => setShowSearch(false)}
           groupName={group.name}
+          scrollToMessage={scrollToMessage}
         />
       )}
 

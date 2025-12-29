@@ -114,7 +114,12 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
         setMentionIndex(prev => (prev - 1 + filteredUsers.length) % filteredUsers.length);
         return;
       }
-      if (e.key === 'Enter' || e.key === 'Tab') {
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredUsers[mentionIndex]);
+        return;
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         insertMention(filteredUsers[mentionIndex]);
         return;
@@ -124,6 +129,7 @@ const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
         return;
       }
     }
+    // Allow Shift+Enter for new lines (pass through to parent)
     onKeyDown?.(e);
   };
 
