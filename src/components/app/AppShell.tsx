@@ -198,9 +198,13 @@ const AppShell = () => {
     }
   };
 
-  const handleSendMessage = useCallback(async (content: string) => {
+  const handleSendMessage = useCallback(async (
+    content: string, 
+    replyToId?: string | null,
+    file?: { url: string; name: string; type: string; size: number } | null
+  ) => {
     if (!activeGroupId) return;
-    await dbSendMessage(content);
+    await dbSendMessage(content, false, null, replyToId, file);
   }, [activeGroupId, dbSendMessage]);
 
   const handleCreateThread = async (name: string, members: User[]) => {

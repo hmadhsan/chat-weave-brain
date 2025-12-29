@@ -1,0 +1,199 @@
+import { useState, useRef, useEffect, KeyboardEvent, forwardRef, useImperativeHandle } from 'react';
+import { User } from '@/types/sidechat';
+import { cn } from '@/lib/utils';
+import UserAvatar from './UserAvatar';
+
+interface MentionInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLTextAreaElement>) => void;
+  onBlur?: () => void;
+  placeholder?: string;
+  disabled?: boolean;
+  users: User[];
+  className?: string;
+}
+
+export interface MentionInputRef {
+  focus: () => void;
+  insertMention: (user: User) => void;
+}
+
+const MentionInput = forwardRef<MentionInputRef, MentionInputProps>(({
+  value,
+  onChange,
+  onKeyDown,
+  onBlur,
+  placeholder,
+  disabled,
+  users,
+  className,
+}, ref) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState('');
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const [cursorPosition, setCursorPosition] = useState(0);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => textareaRef.current?.focus(),
+    insertMention: (user: User) => insertMention(user),
+  }));
+
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(mentionSearch.toLowerCase())
+  ).slice(0, 5);
+
+  const checkForMention = (text: string, cursorPos: number) => {
+    // Find the @ symbol before the cursor
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    if (lastAtIndex === -1) {
+      setShowMentions(false);
+      return;
+    }
+
+    // Check if @ is at start or preceded by whitespace
+    if (lastAtIndex > 0 && !/\s/.test(textBeforeCursor[lastAtIndex - 1])) {
+      setShowMentions(false);
+      return;
+    }
+
+    const searchText = textBeforeCursor.slice(lastAtIndex + 1);
+    
+    // Don't show if there's a space in the search (already completed)
+    if (searchText.includes(' ')) {
+      setShowMentions(false);
+      return;
+    }
+
+    setMentionSearch(searchText);
+    setShowMentions(true);
+    setMentionIndex(0);
+  };
+
+  const insertMention = (user: User) => {
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf('@');
+    
+    const beforeMention = value.slice(0, lastAtIndex);
+    const afterMention = value.slice(cursorPosition);
+    
+    const newValue = `${beforeMention}@${user.name} ${afterMention}`;
+    onChange(newValue);
+    setShowMentions(false);
+    
+    // Focus back and set cursor position
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const newPos = lastAtIndex + user.name.length + 2;
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newPos, newPos);
+      }
+    }, 0);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value;
+    const newCursorPos = e.target.selectionStart || 0;
+    setCursorPosition(newCursorPos);
+    onChange(newValue);
+    checkForMention(newValue, newCursorPos);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (showMentions && filteredUsers.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev + 1) % filteredUsers.length);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev - 1 + filteredUsers.length) % filteredUsers.length);
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredUsers[mentionIndex]);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setShowMentions(false);
+        return;
+      }
+    }
+    onKeyDown?.(e);
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLTextAreaElement>) => {
+    const cursorPos = e.currentTarget.selectionStart || 0;
+    setCursorPosition(cursorPos);
+    checkForMention(value, cursorPos);
+  };
+
+  // Close mentions on click outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowMentions(false);
+    if (showMentions) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showMentions]);
+
+  return (
+    <div className="relative flex-1">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onBlur={onBlur}
+        onClick={handleClick}
+        placeholder={placeholder}
+        disabled={disabled}
+        rows={1}
+        className={cn(
+          "w-full bg-transparent resize-none outline-none text-sm text-foreground placeholder:text-muted-foreground",
+          "min-h-[24px] max-h-32",
+          className
+        )}
+        style={{ height: 'auto' }}
+      />
+      
+      {/* Mentions Dropdown */}
+      {showMentions && filteredUsers.length > 0 && (
+        <div 
+          className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-1">
+            {filteredUsers.map((user, index) => (
+              <button
+                key={user.id}
+                onClick={() => insertMention(user)}
+                className={cn(
+                  "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors",
+                  index === mentionIndex
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground hover:bg-secondary"
+                )}
+              >
+                <UserAvatar user={user} size="sm" />
+                <div className="flex-1 text-left">
+                  <p className="font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+MentionInput.displayName = 'MentionInput';
+
+export default MentionInput;

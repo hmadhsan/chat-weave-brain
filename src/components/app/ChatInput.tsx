@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import ReplyPreview from './ReplyPreview';
+import MentionInput from './MentionInput';
 import { User } from '@/types/sidechat';
 import { useFileUpload } from '@/hooks/useFileUpload';
 
@@ -206,19 +207,14 @@ const ChatInput = ({
             </PopoverContent>
           </Popover>
           
-          <textarea
+          <MentionInput
             value={content}
-            onChange={(e) => handleChange(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             onBlur={onStopTyping}
             placeholder={placeholder}
             disabled={disabled || isUploading}
-            rows={1}
-            className={cn(
-              "flex-1 bg-transparent resize-none outline-none text-sm text-foreground placeholder:text-muted-foreground",
-              "min-h-[24px] max-h-32"
-            )}
-            style={{ height: 'auto' }}
+            users={users}
           />
           
           <Button
