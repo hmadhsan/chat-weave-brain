@@ -13,21 +13,24 @@ interface ReadReceiptsProps {
   users: User[];
   isOwn: boolean;
   totalMembers: number;
+  senderId?: string;
 }
 
-const ReadReceipts = ({ readBy, users, isOwn, totalMembers }: ReadReceiptsProps) => {
-  if (!isOwn) return null;
-
-  const readByUsers = readBy
+const ReadReceipts = ({ readBy, users, isOwn, totalMembers, senderId }: ReadReceiptsProps) => {
+  // Filter out the sender from read receipts
+  const readByOthers = readBy.filter((receipt) => receipt.user_id !== senderId);
+  
+  const readByUsers = readByOthers
     .map((receipt) => users.find((u) => u.id === receipt.user_id))
     .filter(Boolean) as User[];
 
-  // Don't count the sender
-  const otherReaders = readByUsers.filter((u) => readBy.some(r => r.user_id === u.id));
-  const readCount = otherReaders.length;
+  const readCount = readByUsers.length;
   const allRead = readCount >= totalMembers - 1; // -1 for sender
 
   if (readCount === 0) {
+    // Only show "Sent" indicator for own messages
+    if (!isOwn) return null;
+    
     return (
       <TooltipProvider>
         <Tooltip>
@@ -57,7 +60,7 @@ const ReadReceipts = ({ readBy, users, isOwn, totalMembers }: ReadReceiptsProps)
             {allRead ? (
               'Seen by everyone'
             ) : (
-              <>Seen by {otherReaders.map((u) => u.name).join(', ')}</>
+              <>Seen by {readByUsers.map((u) => u.name).join(', ')}</>
             )}
           </p>
         </TooltipContent>

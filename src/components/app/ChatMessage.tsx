@@ -210,7 +210,8 @@ const ChatMessage = ({
                 readBy={readBy} 
                 users={users} 
                 isOwn={!!isOwn} 
-                totalMembers={totalMembers} 
+                totalMembers={totalMembers}
+                senderId={message.userId}
               />
             </span>
             {isAI && (
