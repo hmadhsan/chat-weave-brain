@@ -417,6 +417,26 @@ const GroupChat = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Message Search */}
+      {showSearch && (
+        <MessageSearch
+          messages={messages}
+          users={users}
+          onClose={() => setShowSearch(false)}
+          groupName={group.name}
+        />
+      )}
+
+      {/* Forward Message Modal */}
+      <ForwardMessageModal
+        isOpen={!!messageToForward}
+        onClose={() => setMessageToForward(null)}
+        messageContent={messageToForward?.content || ''}
+        groups={allGroups}
+        threads={sideThreads.map(t => ({ id: t.id, name: t.name, group_id: groupId || '' }))}
+        onForward={handleForwardSubmit}
+      />
     </div>
   );
 };

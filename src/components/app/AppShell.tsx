@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useGroups, useMessages, useGroupMembers } from '@/hooks/useGroups';
 import { useSideThreads, useSideThreadMessages, DbSideThread } from '@/hooks/useSideThreads';
+import { useAllSideThreads } from '@/hooks/useAllSideThreads';
 import { usePendingInvitations } from '@/hooks/usePendingInvitations';
 import GroupSidebar from './GroupSidebar';
 import GroupChat from './GroupChat';
@@ -31,6 +32,10 @@ const AppShell = () => {
   const { threads: dbThreads, createThread: dbCreateThread, deleteThread: dbDeleteThread } = useSideThreads(activeGroupId);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const { messages: threadMessages, sendMessage: sendThreadMessage, editMessage: editThreadMessage, deleteMessage: deleteThreadMessage, togglePin: toggleThreadPin } = useSideThreadMessages(activeThreadId);
+  
+  // All threads for sidebar (across all groups)
+  const groupIds = useMemo(() => dbGroups.map(g => g.id), [dbGroups]);
+  const { threads: allThreads } = useAllSideThreads(groupIds);
 
   // Create a User object from the authenticated user
   const currentUser: User = useMemo(() => ({
@@ -234,6 +239,23 @@ const AppShell = () => {
     await sendThreadMessage(content, replyToId, file);
   }, [activeThreadId, sendThreadMessage]);
 
+  // Forward message handler
+  const handleForwardMessage = useCallback(async (
+    content: string,
+    targetId: string,
+    targetType: 'group' | 'thread'
+  ) => {
+    if (targetType === 'group') {
+      await dbSendMessage(`📨 Forwarded message:\n\n${content}`, false, null, null, null);
+    } else {
+      await sendThreadMessage(`📨 Forwarded message:\n\n${content}`, null, null);
+    }
+    toast({
+      title: 'Message forwarded',
+      description: 'The message has been forwarded successfully.',
+    });
+  }, [dbSendMessage, sendThreadMessage, toast]);
+
   const handleSendToAI = async () => {
     if (!activeThread || !activeGroupId || currentThreadMessages.length === 0) return;
 
@@ -383,6 +405,9 @@ const AppShell = () => {
         pendingInvitations={pendingInvitations}
         onAcceptInvitation={handleAcceptInvitation}
         invitationsLoading={invitationsLoading}
+        sideThreads={allThreads.map(t => ({ ...t, group_id: t.group_id }))}
+        activeThreadId={activeThreadId}
+        onSelectThread={(threadId) => setActiveThreadId(threadId)}
       />
 
       {/* Main Chat */}
@@ -401,6 +426,8 @@ const AppShell = () => {
         sideThreads={dbThreads}
         onSelectThread={(threadId) => setActiveThreadId(threadId)}
         onDeleteThread={handleDeleteThread}
+        onForwardMessage={handleForwardMessage}
+        allGroups={groups.map(g => ({ id: g.id, name: g.name }))}
       />
 
       {/* Private Thread Panel */}
