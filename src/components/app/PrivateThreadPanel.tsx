@@ -11,6 +11,7 @@ import ReadReceipts from './ReadReceipts';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useSideThreadReadReceipts } from '@/hooks/useReadReceipts';
 import { usePresence } from '@/hooks/usePresence';
+import { useLastSeen } from '@/hooks/useLastSeen';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
@@ -79,6 +80,7 @@ const PrivateThreadPanel = ({
 
   // Presence tracking
   const { isOnline } = usePresence(`thread:${thread.id}`);
+  const { getLastSeen } = useLastSeen(`thread:${thread.id}`);
 
   // Mark last message as read when viewing
   useEffect(() => {
@@ -176,12 +178,22 @@ const PrivateThreadPanel = ({
         </div>
         
         <div className="flex flex-wrap items-center gap-2 mt-2">
-          {thread.members.map((member) => (
-            <div key={member.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary/50">
-              <UserAvatar user={member} size="sm" showStatus isOnline={isOnline(member.id)} />
-              <span className="text-xs text-foreground">{member.name}</span>
-            </div>
-          ))}
+          {thread.members.map((member) => {
+            const memberOnline = isOnline(member.id);
+            const lastSeenText = getLastSeen(member.id, memberOnline);
+            
+            return (
+              <div key={member.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary/50">
+                <UserAvatar user={member} size="sm" showStatus isOnline={memberOnline} />
+                <div className="flex flex-col">
+                  <span className="text-xs text-foreground">{member.name}</span>
+                  {!memberOnline && lastSeenText && (
+                    <span className="text-[10px] text-muted-foreground">{lastSeenText}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -213,7 +225,7 @@ const PrivateThreadPanel = ({
                 animate={{ opacity: 1, x: 0 }}
                 className="flex gap-2 group"
               >
-                <UserAvatar user={user} size="sm" />
+                <UserAvatar user={user} size="sm" showStatus isOnline={isOnline(message.userId)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-baseline gap-2">
                     <span className="text-sm font-medium text-foreground">

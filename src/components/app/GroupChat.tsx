@@ -14,6 +14,7 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
 import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
 import { usePresence } from '@/hooks/usePresence';
+import { useLastSeen } from '@/hooks/useLastSeen';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -106,6 +107,7 @@ const GroupChat = ({
 
   // Presence tracking
   const { isOnline } = usePresence(groupId ? `group:${groupId}` : '');
+  const { getLastSeen } = useLastSeen(groupId ? `group:${groupId}` : '');
 
   // Pinned messages
   const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
@@ -286,15 +288,26 @@ const GroupChat = ({
                 <p className="text-xs text-muted-foreground">{group.members.length} members</p>
               </div>
               <div className="max-h-64 overflow-y-auto py-1">
-                {group.members.map((member) => (
-                  <div key={member.id} className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50">
-                    <UserAvatar user={member} size="sm" showStatus isOnline={isOnline(member.id)} />
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-medium text-foreground truncate">{member.name}</span>
-                      <span className="text-xs text-muted-foreground truncate">{member.email}</span>
+                {group.members.map((member) => {
+                  const memberOnline = isOnline(member.id);
+                  const lastSeenText = getLastSeen(member.id, memberOnline);
+                  
+                  return (
+                    <div key={member.id} className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50">
+                      <UserAvatar user={member} size="sm" showStatus isOnline={memberOnline} />
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-sm font-medium text-foreground truncate">{member.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {memberOnline ? (
+                            <span className="text-green-500">Online</span>
+                          ) : (
+                            lastSeenText || member.email
+                          )}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -402,6 +415,7 @@ const GroupChat = ({
                     message={message}
                     user={getUserById(message.userId)}
                     isOwn={message.userId === currentUserId}
+                    isUserOnline={isOnline(message.userId)}
                     onEdit={onEditMessage}
                     onDelete={onDeleteMessage}
                     onTogglePin={onTogglePin}

@@ -155,8 +155,8 @@ const ChatInput = ({
 
       <div className="p-4">
         <div className={cn(
-          "flex items-end gap-2 rounded-2xl border border-transparent bg-secondary/50",
-          "transition-all duration-200",
+          "flex items-end gap-2 rounded-xl border border-input bg-background",
+          "transition-all duration-200 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
           "px-3 py-2"
         )}>
           {/* File Upload */}
