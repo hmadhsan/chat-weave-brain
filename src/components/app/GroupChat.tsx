@@ -30,6 +30,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface SideThreadItem {
   id: string;
@@ -265,9 +270,30 @@ const GroupChat = ({
             <Search className="w-4 h-4" />
           </Button>
 
-          <Button variant="ghost" size="icon">
-            <Users className="w-4 h-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Users className="w-4 h-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-popover z-50">
+              <div className="px-3 py-2 border-b border-border">
+                <p className="text-sm font-medium text-foreground">Group Members</p>
+                <p className="text-xs text-muted-foreground">{group.members.length} members</p>
+              </div>
+              <div className="max-h-64 overflow-y-auto py-1">
+                {group.members.map((member) => (
+                  <div key={member.id} className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50">
+                    <UserAvatar user={member} size="sm" showStatus />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-sm font-medium text-foreground truncate">{member.name}</span>
+                      <span className="text-xs text-muted-foreground truncate">{member.email}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
