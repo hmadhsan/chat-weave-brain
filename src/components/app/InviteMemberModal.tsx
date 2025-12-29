@@ -57,7 +57,7 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
 
       const invitationToken = data.token as string;
 
-      // Generate the invite link - always use the published URL when running in a preview environment
+      // Generate the invite link - use production URL for preview environments
       const host = window.location.hostname;
       const isPreview =
         host === 'localhost' ||
@@ -66,7 +66,9 @@ const InviteMemberModal = ({ isOpen, onClose, groupId, groupName }: InviteMember
         host.startsWith('preview--') ||
         (host.endsWith('.lovable.app') && host.includes('--'));
 
-      const appUrl = isPreview ? 'https://chat-weave-brain.lovable.app' : window.location.origin;
+      // Use the actual published production URL
+      const productionUrl = 'https://sidechatai.lovable.app';
+      const appUrl = isPreview ? productionUrl : window.location.origin;
       const link = `${appUrl}/invite/${invitationToken}`;
       setInviteLink(link);
 
