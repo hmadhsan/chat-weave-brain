@@ -10,6 +10,7 @@ import FileAttachment from './FileAttachment';
 import ReadReceipts from './ReadReceipts';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useSideThreadReadReceipts } from '@/hooks/useReadReceipts';
+import { usePresence } from '@/hooks/usePresence';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { Textarea } from '@/components/ui/textarea';
@@ -75,6 +76,9 @@ const PrivateThreadPanel = ({
   // Read receipts - get all message IDs for tracking
   const messageIds = useMemo(() => messages.map(m => m.id), [messages]);
   const { getReadBy, markAsRead } = useSideThreadReadReceipts(messageIds);
+
+  // Presence tracking
+  const { isOnline } = usePresence(`thread:${thread.id}`);
 
   // Mark last message as read when viewing
   useEffect(() => {
@@ -174,7 +178,7 @@ const PrivateThreadPanel = ({
         <div className="flex flex-wrap items-center gap-2 mt-2">
           {thread.members.map((member) => (
             <div key={member.id} className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-secondary/50">
-              <UserAvatar user={member} size="sm" showStatus />
+              <UserAvatar user={member} size="sm" showStatus isOnline={isOnline(member.id)} />
               <span className="text-xs text-foreground">{member.name}</span>
             </div>
           ))}
