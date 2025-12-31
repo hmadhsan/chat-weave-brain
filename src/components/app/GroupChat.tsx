@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
 import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search } from 'lucide-react';
@@ -10,11 +10,13 @@ import InviteMemberModal from './InviteMemberModal';
 import TypingIndicator from './TypingIndicator';
 import MessageSearch from './MessageSearch';
 import ForwardMessageModal from './ForwardMessageModal';
+import ThreadCreationNotification from './ThreadCreationNotification';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
 import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
 import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
+import { useThreadCreationNotification } from '@/hooks/useThreadCreationNotification';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -108,6 +110,9 @@ const GroupChat = ({
   // Presence tracking
   const { isOnline } = usePresence(groupId ? `group:${groupId}` : '');
   const { getLastSeen } = useLastSeen(groupId ? `group:${groupId}` : '');
+
+  // Thread creation notification
+  const { notification: threadNotification, dismissNotification } = useThreadCreationNotification(groupId, currentUserId);
 
   // Pinned messages
   const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
@@ -452,6 +457,17 @@ const GroupChat = ({
           </span>
         </motion.div>
       )}
+
+      {/* Thread Creation Notification */}
+      <AnimatePresence>
+        {threadNotification && (
+          <ThreadCreationNotification
+            creatorName={threadNotification.creatorName}
+            threadName={threadNotification.threadName}
+            onDismiss={dismissNotification}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Input */}
       <ChatInput
