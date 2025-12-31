@@ -21,7 +21,7 @@ const AppShell = () => {
   const { user, profile } = useAuth();
   
   // Real database hooks
-  const { groups: dbGroups, loading: groupsLoading, createGroup: dbCreateGroup, refetchGroups } = useGroups();
+  const { groups: dbGroups, loading: groupsLoading, createGroup: dbCreateGroup, updateGroupName: dbUpdateGroupName, refetchGroups } = useGroups();
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const { messages: dbMessages, sendMessage: dbSendMessage, editMessage: dbEditMessage, deleteMessage: dbDeleteMessage, togglePin: dbTogglePin } = useMessages(activeGroupId);
   const { members: dbMembers } = useGroupMembers(activeGroupId);
@@ -30,7 +30,7 @@ const AppShell = () => {
   const { invitations: pendingInvitations, acceptInvitation, loading: invitationsLoading } = usePendingInvitations();
 
   // Side threads from database
-  const { threads: dbThreads, createThread: dbCreateThread, deleteThread: dbDeleteThread } = useSideThreads(activeGroupId);
+  const { threads: dbThreads, createThread: dbCreateThread, deleteThread: dbDeleteThread, updateThreadName: dbUpdateThreadName } = useSideThreads(activeGroupId);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const { messages: threadMessages, sendMessage: sendThreadMessage, editMessage: editThreadMessage, deleteMessage: deleteThreadMessage, togglePin: toggleThreadPin } = useSideThreadMessages(activeThreadId);
   
@@ -447,6 +447,13 @@ const AppShell = () => {
         onDeleteThread={handleDeleteThread}
         onForwardMessage={handleForwardMessage}
         allGroups={groups.map(g => ({ id: g.id, name: g.name }))}
+        onEditGroupName={async (newName) => {
+          if (activeGroupId) {
+            await dbUpdateGroupName(activeGroupId, newName);
+          }
+        }}
+        onEditThreadName={dbUpdateThreadName}
+        isGroupOwner={activeGroup?.id ? dbGroups.find(g => g.id === activeGroup.id)?.owner_id === currentUser.id : false}
       />
 
       {/* Private Thread Panel */}
