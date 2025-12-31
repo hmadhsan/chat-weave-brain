@@ -13,8 +13,10 @@ import GroupChat from './GroupChat';
 import PrivateThreadPanel from './PrivateThreadPanel';
 import CreateThreadModal from './CreateThreadModal';
 import CreateGroupModal from './CreateGroupModal';
-import { MessageSquare, Loader2 } from 'lucide-react';
+import AIChatPanel from './AIChatPanel';
+import { MessageSquare, Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 
 const AppShell = () => {
   const { toast } = useToast();
@@ -191,6 +193,7 @@ const AppShell = () => {
   const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isSendingToAI, setIsSendingToAI] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
 
@@ -389,6 +392,21 @@ const AppShell = () => {
           </div>
         </div>
 
+        {/* AI Chat Button */}
+        <Button
+          onClick={() => setIsAIChatOpen(true)}
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all z-40"
+          size="icon"
+        >
+          <Sparkles className="h-6 w-6" />
+        </Button>
+
+        {/* AI Chat Panel */}
+        <AIChatPanel
+          isOpen={isAIChatOpen}
+          onClose={() => setIsAIChatOpen(false)}
+        />
+
         {/* Create Group Modal */}
         <CreateGroupModal
           isOpen={isGroupModalOpen}
@@ -410,6 +428,16 @@ const AppShell = () => {
     createdAt: new Date(activeThread.created_at),
     isActive: activeThread.is_active,
   } : null;
+
+  // Build context from recent messages for AI
+  const aiContext = useMemo(() => {
+    if (!activeGroup || groupMessages.length === 0) return '';
+    const recentMessages = groupMessages.slice(-20);
+    return recentMessages.map(m => {
+      const msgUser = groupUsers.find(u => u.id === m.userId);
+      return `${msgUser?.name || 'Unknown'}: ${m.content}`;
+    }).join('\n');
+  }, [groupMessages, groupUsers, activeGroup]);
 
   return (
     <div className="h-screen flex bg-background overflow-hidden">
@@ -474,6 +502,22 @@ const AppShell = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* AI Chat Button */}
+      <Button
+        onClick={() => setIsAIChatOpen(true)}
+        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all z-40"
+        size="icon"
+      >
+        <Sparkles className="h-6 w-6" />
+      </Button>
+
+      {/* AI Chat Panel */}
+      <AIChatPanel
+        isOpen={isAIChatOpen}
+        onClose={() => setIsAIChatOpen(false)}
+        context={aiContext}
+      />
 
       {/* Create Thread Modal */}
       <CreateThreadModal
