@@ -70,6 +70,8 @@ interface GroupChatProps {
   onEditGroupName?: (newName: string) => Promise<void>;
   onEditThreadName?: (threadId: string, newName: string) => Promise<boolean>;
   isGroupOwner?: boolean;
+  onAskAI?: (content: string) => Promise<void>;
+  isAILoading?: boolean;
 }
 
 const GroupChat = ({
@@ -92,6 +94,8 @@ const GroupChat = ({
   onEditGroupName,
   onEditThreadName,
   isGroupOwner = false,
+  onAskAI,
+  isAILoading = false,
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -520,6 +524,8 @@ const GroupChat = ({
       {/* Input */}
       <ChatInput
         onSend={handleSendMessage}
+        onAskAI={onAskAI}
+        isAILoading={isAILoading}
         placeholder={`Message ${group.name}...`}
         onTyping={startTyping}
         onStopTyping={stopTyping}

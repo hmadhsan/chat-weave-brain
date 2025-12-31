@@ -193,6 +193,7 @@ const AppShell = () => {
   const [isThreadModalOpen, setIsThreadModalOpen] = useState(false);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [isSendingToAI, setIsSendingToAI] = useState(false);
+  const [isAskingAI, setIsAskingAI] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
@@ -355,6 +356,63 @@ const AppShell = () => {
     }
   };
 
+  // Handle "Ask AI" in group chat - sends user message + gets AI response
+  const handleAskAIInChat = useCallback(async (userMessage: string) => {
+    if (!activeGroupId || !user) return;
+
+    setIsAskingAI(true);
+
+    try {
+      // First, post the user's question to the group chat
+      await dbSendMessage(`💬 **Question for AI:** ${userMessage}`, false, null, null, null);
+
+      // Build context from recent messages for better AI understanding
+      const recentContext = groupMessages.slice(-15).map((m) => {
+        const msgUser = groupUsers.find((u) => u.id === m.userId);
+        return `${msgUser?.name || 'Unknown'}: ${m.content}`;
+      }).join('\n');
+
+      // Call the AI function
+      const { data, error } = await supabase.functions.invoke('chat-ai', {
+        body: { 
+          threadContext: `Recent chat context:\n${recentContext}\n\nUser question: ${userMessage}`,
+          threadName: activeGroup?.name || 'Group Chat'
+        }
+      });
+
+      if (error) {
+        console.error('AI function error:', error);
+        throw new Error(error.message || 'Failed to get AI response');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      const aiContent = data?.content;
+      if (!aiContent) {
+        throw new Error('No response from AI');
+      }
+
+      // Post AI response to the group chat
+      await dbSendMessage(`🤖 **AI Response:**\n\n${aiContent}`, true, null, null, null);
+
+      toast({
+        title: 'AI responded',
+        description: 'The AI has answered your question in the chat.',
+      });
+    } catch (error) {
+      console.error('Error asking AI:', error);
+      toast({
+        title: 'AI request failed',
+        description: error instanceof Error ? error.message : 'Failed to get AI response. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsAskingAI(false);
+    }
+  }, [activeGroupId, user, dbSendMessage, groupMessages, groupUsers, activeGroup, toast]);
+
   const handleCloseThread = () => {
     setActiveThreadId(null);
   };
@@ -485,6 +543,8 @@ const AppShell = () => {
         }}
         onEditThreadName={dbUpdateThreadName}
         isGroupOwner={activeGroup?.id ? dbGroups.find(g => g.id === activeGroup.id)?.owner_id === currentUser.id : false}
+        onAskAI={handleAskAIInChat}
+        isAILoading={isAskingAI}
       />
 
       {/* Private Thread Panel */}
