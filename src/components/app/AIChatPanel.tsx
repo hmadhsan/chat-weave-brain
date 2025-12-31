@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Send, X, Loader2, Trash2, Sparkles, Mic, MicOff } from 'lucide-react';
+import { Bot, Send, X, Loader2, Trash2, Sparkles, Mic, MicOff, Volume2, VolumeX, Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import { useToast } from '@/hooks/use-toast';
@@ -73,9 +75,74 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [autoSpeak, setAutoSpeak] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  // Text-to-speech function
+  const speak = useCallback((text: string, messageId: string) => {
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    // Strip markdown formatting for cleaner speech
+    const cleanText = text
+      .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+      .replace(/\*(.*?)\*/g, '$1') // italic
+      .replace(/`(.*?)`/g, '$1') // inline code
+      .replace(/```[\s\S]*?```/g, '') // code blocks
+      .replace(/#{1,6}\s/g, '') // headers
+      .replace(/\[(.*?)\]\(.*?\)/g, '$1') // links
+      .replace(/[•\-]\s/g, '') // bullets
+      .replace(/\n+/g, '. '); // newlines to pauses
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    
+    // Try to use a good voice
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(v => 
+      v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel')
+    ) || voices.find(v => v.lang.startsWith('en'));
+    
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+    
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setSpeakingMessageId(messageId);
+    };
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setSpeakingMessageId(null);
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setSpeakingMessageId(null);
+    };
+    
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setSpeakingMessageId(null);
+  }, []);
+
+  // Load voices when available
+  useEffect(() => {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => {
+      window.speechSynthesis.getVoices();
+    };
+  }, []);
 
   // Initialize speech recognition
   useEffect(() => {
@@ -276,6 +343,11 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
         }
       }
 
+      // Auto-speak if enabled
+      if (autoSpeak && assistantContent) {
+        speak(assistantContent, assistantId);
+      }
+
     } catch (error) {
       console.error('Chat error:', error);
       setMessages(prev => [...prev, {
@@ -304,7 +376,14 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
   };
 
   const clearChat = () => {
+    stopSpeaking();
     setMessages([]);
+  };
+
+  // Handle close - stop speaking
+  const handleClose = () => {
+    stopSpeaking();
+    onClose();
   };
 
   return (
@@ -329,6 +408,28 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* Auto-speak toggle */}
+              <div className="flex items-center gap-1.5 mr-2">
+                <Switch
+                  id="auto-speak"
+                  checked={autoSpeak}
+                  onCheckedChange={setAutoSpeak}
+                  className="scale-75"
+                />
+                <Label htmlFor="auto-speak" className="text-xs text-muted-foreground cursor-pointer">
+                  Auto
+                </Label>
+              </div>
+              {isSpeaking && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={stopSpeaking}
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                >
+                  <Square className="h-4 w-4 fill-current" />
+                </Button>
+              )}
               {messages.length > 0 && (
                 <Button
                   variant="ghost"
@@ -342,7 +443,7 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={onClose}
+                onClick={handleClose}
                 className="h-8 w-8"
               >
                 <X className="h-4 w-4" />
@@ -389,7 +490,7 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={cn(
-                      "flex gap-3",
+                      "flex gap-3 group",
                       message.role === 'user' ? "justify-end" : "justify-start"
                     )}
                   >
@@ -398,20 +499,51 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
                         <Sparkles className="h-4 w-4 text-primary" />
                       </div>
                     )}
-                    <div
-                      className={cn(
-                        "max-w-[85%] rounded-2xl px-4 py-2.5",
-                        message.role === 'user'
-                          ? "bg-primary text-primary-foreground rounded-br-md"
-                          : "bg-muted text-foreground rounded-bl-md"
-                      )}
-                    >
-                      {message.role === 'assistant' ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <ReactMarkdown>{message.content || '...'}</ReactMarkdown>
+                    <div className="flex flex-col gap-1 max-w-[85%]">
+                      <div
+                        className={cn(
+                          "rounded-2xl px-4 py-2.5",
+                          message.role === 'user'
+                            ? "bg-primary text-primary-foreground rounded-br-md"
+                            : "bg-muted text-foreground rounded-bl-md"
+                        )}
+                      >
+                        {message.role === 'assistant' ? (
+                          <div className="prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown>{message.content || '...'}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        )}
+                      </div>
+                      {/* Speak button for AI messages */}
+                      {message.role === 'assistant' && message.content && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (speakingMessageId === message.id) {
+                                stopSpeaking();
+                              } else {
+                                speak(message.content, message.id);
+                              }
+                            }}
+                            className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                          >
+                            {speakingMessageId === message.id ? (
+                              <>
+                                <Square className="h-3 w-3 mr-1 fill-current" />
+                                Stop
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="h-3 w-3 mr-1" />
+                                Listen
+                              </>
+                            )}
+                          </Button>
                         </div>
-                      ) : (
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                       )}
                     </div>
                   </motion.div>
