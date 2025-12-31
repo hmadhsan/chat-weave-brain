@@ -83,64 +83,101 @@ const AIChatPanel = ({ isOpen, onClose, context }: AIChatPanelProps) => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   // Text-to-speech function
-  const speak = useCallback((text: string, messageId: string) => {
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    // Strip markdown formatting for cleaner speech
-    const cleanText = text
-      .replace(/\*\*(.*?)\*\*/g, '$1') // bold
-      .replace(/\*(.*?)\*/g, '$1') // italic
-      .replace(/`(.*?)`/g, '$1') // inline code
-      .replace(/```[\s\S]*?```/g, '') // code blocks
-      .replace(/#{1,6}\s/g, '') // headers
-      .replace(/\[(.*?)\]\(.*?\)/g, '$1') // links
-      .replace(/[•\-]\s/g, '') // bullets
-      .replace(/\n+/g, '. '); // newlines to pauses
-    
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    
-    // Try to use a good voice
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find(v => 
-      v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Daniel')
-    ) || voices.find(v => v.lang.startsWith('en'));
-    
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-    }
-    
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setSpeakingMessageId(messageId);
-    };
-    
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setSpeakingMessageId(null);
-    };
-    
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      setSpeakingMessageId(null);
-    };
-    
-    window.speechSynthesis.speak(utterance);
-  }, []);
+  const speak = useCallback(
+    (text: string, messageId: string) => {
+      if (
+        typeof window === 'undefined' ||
+        !window.speechSynthesis ||
+        typeof SpeechSynthesisUtterance === 'undefined'
+      ) {
+        toast({
+          title: 'Text-to-speech not supported',
+          description: 'Your browser does not support text-to-speech.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+
+      // Strip markdown formatting for cleaner speech
+      const cleanText = text
+        .replace(/```[\s\S]*?```/g, '') // code blocks
+        .replace(/\*\*(.*?)\*\*/g, '$1') // bold
+        .replace(/\*(.*?)\*/g, '$1') // italic
+        .replace(/`(.*?)`/g, '$1') // inline code
+        .replace(/#{1,6}\s/g, '') // headers
+        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // links
+        .replace(/[•\-]\s/g, '') // bullets
+        .replace(/\n+/g, '. '); // newlines to pauses
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      // Try to use a good voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferredVoice =
+        voices.find(
+          (v) =>
+            v.name.includes('Google') ||
+            v.name.includes('Samantha') ||
+            v.name.includes('Daniel')
+        ) || voices.find((v) => v.lang.startsWith('en'));
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setSpeakingMessageId(messageId);
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setSpeakingMessageId(null);
+      };
+
+      utterance.onerror = () => {
+        setIsSpeaking(false);
+        setSpeakingMessageId(null);
+      };
+
+      window.speechSynthesis.speak(utterance);
+    },
+    [toast]
+  );
 
   const stopSpeaking = useCallback(() => {
-    window.speechSynthesis.cancel();
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
     setIsSpeaking(false);
     setSpeakingMessageId(null);
   }, []);
 
   // Load voices when available
   useEffect(() => {
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.getVoices();
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+
+    const synth = window.speechSynthesis;
+    const handleVoicesChanged = () => {
+      try {
+        synth.getVoices();
+      } catch {
+        // ignore
+      }
+    };
+
+    handleVoicesChanged();
+    synth.onvoiceschanged = handleVoicesChanged;
+
+    return () => {
+      if (synth.onvoiceschanged === handleVoicesChanged) {
+        synth.onvoiceschanged = null;
+      }
     };
   }, []);
 
