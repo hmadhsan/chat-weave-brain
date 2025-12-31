@@ -197,6 +197,18 @@ const AppShell = () => {
 
   const activeGroup = groups.find((g) => g.id === activeGroupId);
 
+  // Build context from recent messages for AI
+  const aiContext = useMemo(() => {
+    if (!activeGroup || groupMessages.length === 0) return '';
+    const recentMessages = groupMessages.slice(-20);
+    return recentMessages
+      .map((m) => {
+        const msgUser = groupUsers.find((u) => u.id === m.userId);
+        return `${msgUser?.name || 'Unknown'}: ${m.content}`;
+      })
+      .join('\n');
+  }, [groupMessages, groupUsers, activeGroup]);
+
   const handleSelectGroup = (groupId: string) => {
     setActiveGroupId(groupId);
     setActiveThreadId(null);
@@ -429,15 +441,6 @@ const AppShell = () => {
     isActive: activeThread.is_active,
   } : null;
 
-  // Build context from recent messages for AI
-  const aiContext = useMemo(() => {
-    if (!activeGroup || groupMessages.length === 0) return '';
-    const recentMessages = groupMessages.slice(-20);
-    return recentMessages.map(m => {
-      const msgUser = groupUsers.find(u => u.id === m.userId);
-      return `${msgUser?.name || 'Unknown'}: ${m.content}`;
-    }).join('\n');
-  }, [groupMessages, groupUsers, activeGroup]);
 
   return (
     <div className="h-screen flex bg-background overflow-hidden">
