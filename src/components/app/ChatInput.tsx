@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Send, Smile, Paperclip, X, Loader2 } from 'lucide-react';
+import { Send, Smile, Paperclip, X, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -20,6 +20,7 @@ interface ReplyTo {
 
 interface ChatInputProps {
   onSend: (content: string, file?: { url: string; name: string; type: string; size: number } | null) => void;
+  onAskAI?: (content: string) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
   onTyping?: () => void;
@@ -27,6 +28,7 @@ interface ChatInputProps {
   replyTo?: ReplyTo | null;
   onCancelReply?: () => void;
   users?: User[];
+  isAILoading?: boolean;
 }
 
 const EMOJI_LIST = [
@@ -41,7 +43,8 @@ const EMOJI_LIST = [
 ];
 
 const ChatInput = ({ 
-  onSend, 
+  onSend,
+  onAskAI,
   placeholder = 'Type a message...', 
   disabled, 
   onTyping, 
@@ -49,6 +52,7 @@ const ChatInput = ({
   replyTo,
   onCancelReply,
   users = [],
+  isAILoading = false,
 }: ChatInputProps) => {
   const [content, setContent] = useState('');
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -67,7 +71,7 @@ const ChatInput = ({
   };
 
   const handleSend = async () => {
-    if ((!content.trim() && !selectedFile) || disabled || isUploading) return;
+    if ((!content.trim() && !selectedFile) || disabled || isUploading || isAILoading) return;
 
     let uploadedFile = null;
 
@@ -83,6 +87,18 @@ const ChatInput = ({
     if (onStopTyping) {
       onStopTyping();
     }
+  };
+
+  const handleAskAI = async () => {
+    if (!content.trim() || disabled || isUploading || isAILoading || !onAskAI) return;
+    
+    const messageContent = content.trim();
+    setContent('');
+    if (onStopTyping) {
+      onStopTyping();
+    }
+    
+    await onAskAI(messageContent);
   };
 
   const handleEmojiSelect = (emoji: string) => {
@@ -215,7 +231,7 @@ const ChatInput = ({
           
           <Button
             onClick={handleSend}
-            disabled={(!content.trim() && !selectedFile) || disabled || isUploading}
+            disabled={(!content.trim() && !selectedFile) || disabled || isUploading || isAILoading}
             size="icon"
             className="shrink-0 h-9 w-9 rounded-xl"
           >
@@ -225,9 +241,25 @@ const ChatInput = ({
               <Send className="w-4 h-4" />
             )}
           </Button>
+          
+          {onAskAI && (
+            <Button
+              onClick={handleAskAI}
+              disabled={!content.trim() || disabled || isUploading || isAILoading}
+              size="icon"
+              className="shrink-0 h-9 w-9 rounded-xl bg-primary hover:bg-primary/90"
+              title="Ask AI"
+            >
+              {isAILoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+            </Button>
+          )}
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 ml-1">
-          Press Enter to send • Shift+Enter for new line • @ to mention
+          Press Enter to send • Shift+Enter for new line • @ to mention {onAskAI && '• Click ✨ to Ask AI'}
         </p>
       </div>
     </div>
