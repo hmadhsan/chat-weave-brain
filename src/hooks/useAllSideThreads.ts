@@ -30,14 +30,17 @@ export function useAllSideThreads(groupIds: string[]) {
         .select('side_thread_id')
         .eq('user_id', user.id);
 
-      const participantThreadIds = participantData?.map(p => p.side_thread_id) || [];
+      const participantThreadIds = participantData?.map((p) => p.side_thread_id) || [];
+      const orFilter = participantThreadIds.length
+        ? `id.in.(${participantThreadIds.join(',')}),created_by.eq.${user.id}`
+        : `created_by.eq.${user.id}`;
 
       // Fetch all threads
       const { data, error } = await supabase
         .from('side_threads')
         .select('*')
         .in('group_id', groupIds)
-        .or(`id.in.(${participantThreadIds.join(',')}),created_by.eq.${user.id}`)
+        .or(orFilter)
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
