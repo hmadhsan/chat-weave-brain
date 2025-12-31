@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
-import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search } from 'lucide-react';
+import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search, Pencil } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
 import UserAvatar from './UserAvatar';
@@ -10,13 +10,15 @@ import InviteMemberModal from './InviteMemberModal';
 import TypingIndicator from './TypingIndicator';
 import MessageSearch from './MessageSearch';
 import ForwardMessageModal from './ForwardMessageModal';
-import ThreadCreationNotification from './ThreadCreationNotification';
+import GroupNotification from './GroupNotification';
+import EditNameModal from './EditNameModal';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
 import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
 import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
 import { useThreadCreationNotification } from '@/hooks/useThreadCreationNotification';
+import { useMemberNotification } from '@/hooks/useMemberNotification';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -64,6 +66,9 @@ interface GroupChatProps {
   onDeleteThread?: (threadId: string) => void;
   onForwardMessage?: (content: string, targetId: string, targetType: 'group' | 'thread') => Promise<void>;
   allGroups?: { id: string; name: string }[];
+  onEditGroupName?: (newName: string) => Promise<void>;
+  onEditThreadName?: (threadId: string, newName: string) => Promise<boolean>;
+  isGroupOwner?: boolean;
 }
 
 const GroupChat = ({
@@ -83,6 +88,9 @@ const GroupChat = ({
   onDeleteThread,
   onForwardMessage,
   allGroups = [],
+  onEditGroupName,
+  onEditThreadName,
+  isGroupOwner = false,
 }: GroupChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -91,6 +99,8 @@ const GroupChat = ({
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [messageToForward, setMessageToForward] = useState<Message | null>(null);
+  const [isEditGroupModalOpen, setIsEditGroupModalOpen] = useState(false);
+  const [editingThread, setEditingThread] = useState<{ id: string; name: string } | null>(null);
   const { profile } = useAuth();
 
   // Typing indicator
@@ -112,7 +122,10 @@ const GroupChat = ({
   const { getLastSeen } = useLastSeen(groupId ? `group:${groupId}` : '');
 
   // Thread creation notification
-  const { notification: threadNotification, dismissNotification } = useThreadCreationNotification(groupId, currentUserId);
+  const { notification: threadNotification, dismissNotification: dismissThreadNotification } = useThreadCreationNotification(groupId, currentUserId);
+
+  // Member join/leave notification
+  const { notification: memberNotification, dismissNotification: dismissMemberNotification } = useMemberNotification(groupId, currentUserId);
 
   // Pinned messages
   const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
@@ -221,9 +234,20 @@ const GroupChat = ({
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <Hash className="w-5 h-5 text-primary" />
           </div>
-          <div>
-            <h2 className="font-display font-semibold text-foreground">{group.name}</h2>
-            <p className="text-xs text-muted-foreground">{group.members.length} members</p>
+          <div className="flex items-center gap-2">
+            <div>
+              <h2 className="font-display font-semibold text-foreground">{group.name}</h2>
+              <p className="text-xs text-muted-foreground">{group.members.length} members</p>
+            </div>
+            {isGroupOwner && onEditGroupName && (
+              <button
+                onClick={() => setIsEditGroupModalOpen(true)}
+                className="p-1.5 rounded-md hover:bg-accent transition-colors"
+                title="Edit group name"
+              >
+                <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -367,21 +391,44 @@ const GroupChat = ({
                             {isOwner ? 'You' : creatorName}
                           </span>
                         </div>
-                        {isOwner && onDeleteThread && (
-                          <button
-                            onClick={(e) => handleDeleteClick(e, thread.id)}
-                            className={`ml-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ${
-                              activeThread?.id === thread.id
-                                ? 'hover:bg-primary-foreground/20'
-                                : 'hover:bg-destructive/20'
-                            }`}
-                          >
-                            <Trash2 className={`w-3 h-3 ${
-                              activeThread?.id === thread.id
-                                ? 'text-primary-foreground'
-                                : 'text-destructive'
-                            }`} />
-                          </button>
+                        {isOwner && (
+                          <div className="flex items-center ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {onEditThreadName && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingThread({ id: thread.id, name: thread.name });
+                                }}
+                                className={`p-1 rounded ${
+                                  activeThread?.id === thread.id
+                                    ? 'hover:bg-primary-foreground/20'
+                                    : 'hover:bg-accent'
+                                }`}
+                              >
+                                <Pencil className={`w-3 h-3 ${
+                                  activeThread?.id === thread.id
+                                    ? 'text-primary-foreground'
+                                    : 'text-muted-foreground'
+                                }`} />
+                              </button>
+                            )}
+                            {onDeleteThread && (
+                              <button
+                                onClick={(e) => handleDeleteClick(e, thread.id)}
+                                className={`p-1 rounded ${
+                                  activeThread?.id === thread.id
+                                    ? 'hover:bg-primary-foreground/20'
+                                    : 'hover:bg-destructive/20'
+                                }`}
+                              >
+                                <Trash2 className={`w-3 h-3 ${
+                                  activeThread?.id === thread.id
+                                    ? 'text-primary-foreground'
+                                    : 'text-destructive'
+                                }`} />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </TooltipTrigger>
@@ -461,10 +508,28 @@ const GroupChat = ({
       {/* Thread Creation Notification */}
       <AnimatePresence>
         {threadNotification && (
-          <ThreadCreationNotification
-            creatorName={threadNotification.creatorName}
+          <GroupNotification
+            type="thread_created"
+            userName={threadNotification.creatorName}
             threadName={threadNotification.threadName}
-            onDismiss={dismissNotification}
+            onDismiss={dismissThreadNotification}
+            onClick={() => {
+              if (onSelectThread) {
+                onSelectThread(threadNotification.id);
+                dismissThreadNotification();
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Member Join/Leave Notification */}
+      <AnimatePresence>
+        {memberNotification && (
+          <GroupNotification
+            type={memberNotification.type}
+            userName={memberNotification.userName}
+            onDismiss={dismissMemberNotification}
           />
         )}
       </AnimatePresence>
@@ -527,6 +592,34 @@ const GroupChat = ({
         groups={allGroups}
         threads={sideThreads.map(t => ({ id: t.id, name: t.name, group_id: groupId || '' }))}
         onForward={handleForwardSubmit}
+      />
+
+      {/* Edit Group Name Modal */}
+      <EditNameModal
+        isOpen={isEditGroupModalOpen}
+        onClose={() => setIsEditGroupModalOpen(false)}
+        onSave={async (newName) => {
+          if (onEditGroupName) {
+            await onEditGroupName(newName);
+          }
+        }}
+        currentName={group.name}
+        title="Edit Group Name"
+        label="Group Name"
+      />
+
+      {/* Edit Thread Name Modal */}
+      <EditNameModal
+        isOpen={!!editingThread}
+        onClose={() => setEditingThread(null)}
+        onSave={async (newName) => {
+          if (editingThread && onEditThreadName) {
+            await onEditThreadName(editingThread.id, newName);
+          }
+        }}
+        currentName={editingThread?.name || ''}
+        title="Edit Thread Name"
+        label="Thread Name"
       />
     </div>
   );

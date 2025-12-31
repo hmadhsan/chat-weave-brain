@@ -112,11 +112,44 @@ export function useGroups() {
     }
   }, [user, toast]);
 
+  const updateGroupName = useCallback(async (groupId: string, newName: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('groups')
+        .update({ name: newName })
+        .eq('id', groupId)
+        .eq('owner_id', user.id);
+
+      if (error) throw error;
+
+      setGroups(prev => prev.map(g => 
+        g.id === groupId ? { ...g, name: newName } : g
+      ));
+
+      toast({
+        title: 'Group renamed',
+        description: `Group has been renamed to "${newName}".`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating group name:', error);
+      toast({
+        title: 'Failed to rename group',
+        description: 'You can only rename groups you own.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [user, toast]);
+
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
 
-  return { groups, loading, createGroup, refetchGroups: fetchGroups };
+  return { groups, loading, createGroup, updateGroupName, refetchGroups: fetchGroups };
 }
 
 export function useGroupMembers(groupId: string | null) {

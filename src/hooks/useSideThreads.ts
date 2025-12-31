@@ -179,7 +179,40 @@ export function useSideThreads(groupId: string | null) {
     }
   }, [user, toast]);
 
-  return { threads, loading, createThread, deleteThread, refetchThreads: fetchThreads };
+  const updateThreadName = useCallback(async (threadId: string, newName: string) => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('side_threads')
+        .update({ name: newName })
+        .eq('id', threadId)
+        .eq('created_by', user.id);
+
+      if (error) throw error;
+
+      setThreads(prev => prev.map(t => 
+        t.id === threadId ? { ...t, name: newName } : t
+      ));
+
+      toast({
+        title: 'Thread renamed',
+        description: `Thread has been renamed to "${newName}".`,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error updating thread name:', error);
+      toast({
+        title: 'Failed to rename thread',
+        description: 'You can only rename threads you created.',
+        variant: 'destructive',
+      });
+      return false;
+    }
+  }, [user, toast]);
+
+  return { threads, loading, createThread, deleteThread, updateThreadName, refetchThreads: fetchThreads };
 }
 
 export function useSideThreadParticipants(threadId: string | null) {
