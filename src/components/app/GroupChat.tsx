@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
 import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search, Pencil } from 'lucide-react';
@@ -10,15 +10,15 @@ import InviteMemberModal from './InviteMemberModal';
 import TypingIndicator from './TypingIndicator';
 import MessageSearch from './MessageSearch';
 import ForwardMessageModal from './ForwardMessageModal';
-import GroupNotification from './GroupNotification';
+
 import EditNameModal from './EditNameModal';
+import SystemMessage from './SystemMessage';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { useMessageReactions } from '@/hooks/useReactions';
 import { useMessageReadReceipts } from '@/hooks/useReadReceipts';
 import { usePresence } from '@/hooks/usePresence';
 import { useLastSeen } from '@/hooks/useLastSeen';
-import { useThreadCreationNotification } from '@/hooks/useThreadCreationNotification';
-import { useMemberNotification } from '@/hooks/useMemberNotification';
+import { useSystemEvents } from '@/hooks/useSystemEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
@@ -121,11 +121,8 @@ const GroupChat = ({
   const { isOnline } = usePresence(groupId ? `group:${groupId}` : '');
   const { getLastSeen } = useLastSeen(groupId ? `group:${groupId}` : '');
 
-  // Thread creation notification
-  const { notification: threadNotification, dismissNotification: dismissThreadNotification } = useThreadCreationNotification(groupId, currentUserId);
-
-  // Member join/leave notification
-  const { notification: memberNotification, dismissNotification: dismissMemberNotification } = useMemberNotification(groupId, currentUserId);
+  // System events (thread creation, member join/leave)
+  const { events: systemEvents } = useSystemEvents(groupId, currentUserId);
 
   // Pinned messages
   const pinnedMessages = useMemo(() => messages.filter(m => m.is_pinned), [messages]);
@@ -483,6 +480,12 @@ const GroupChat = ({
                 </div>
               );
             })}
+            
+            {/* System Events (inline) */}
+            {systemEvents.map((event) => (
+              <SystemMessage key={event.id} message={event.message} />
+            ))}
+            
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -504,35 +507,6 @@ const GroupChat = ({
           </span>
         </motion.div>
       )}
-
-      {/* Thread Creation Notification */}
-      <AnimatePresence>
-        {threadNotification && (
-          <GroupNotification
-            type="thread_created"
-            userName={threadNotification.creatorName}
-            threadName={threadNotification.threadName}
-            onDismiss={dismissThreadNotification}
-            onClick={() => {
-              if (onSelectThread) {
-                onSelectThread(threadNotification.id);
-                dismissThreadNotification();
-              }
-            }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Member Join/Leave Notification */}
-      <AnimatePresence>
-        {memberNotification && (
-          <GroupNotification
-            type={memberNotification.type}
-            userName={memberNotification.userName}
-            onDismiss={dismissMemberNotification}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Input */}
       <ChatInput
