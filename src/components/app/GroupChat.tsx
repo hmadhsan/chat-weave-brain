@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { isSameDay } from 'date-fns';
 import { Group, Message, User, PrivateThread } from '@/types/sidechat';
 import { Button } from '@/components/ui/button';
 import { Users, MessageSquarePlus, Hash, UserPlus, Lock, Trash2, User as UserIcon, Pin, Search, Pencil } from 'lucide-react';
@@ -10,7 +11,7 @@ import InviteMemberModal from './InviteMemberModal';
 import TypingIndicator from './TypingIndicator';
 import MessageSearch from './MessageSearch';
 import ForwardMessageModal from './ForwardMessageModal';
-
+import DateSeparator from './DateSeparator';
 import EditNameModal from './EditNameModal';
 import SystemMessage from './SystemMessage';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
@@ -456,27 +457,35 @@ const GroupChat = ({
           </div>
         ) : (
           <div className="py-4">
-            {messages.map((message) => {
+            {messages.map((message, index) => {
               const replyToMessage = message.replyToId ? messageMap.get(message.replyToId) : null;
+              const messageDate = new Date(message.createdAt);
+              const previousMessage = index > 0 ? messages[index - 1] : null;
+              const previousDate = previousMessage ? new Date(previousMessage.createdAt) : null;
+              const showDateSeparator = !previousDate || !isSameDay(messageDate, previousDate);
+              
               return (
-                <div key={message.id} data-message-id={message.id}>
-                  <ChatMessage
-                    message={message}
-                    user={getUserById(message.userId)}
-                    isOwn={message.userId === currentUserId}
-                    isUserOnline={isOnline(message.userId)}
-                    onEdit={onEditMessage}
-                    onDelete={onDeleteMessage}
-                    onTogglePin={onTogglePin}
-                    onReply={handleReply}
-                    onForward={onForwardMessage ? handleForward : undefined}
-                    reactions={getReactionGroups(message.id)}
-                    onToggleReaction={handleToggleReaction}
-                    readBy={getReadBy(message.id)}
-                    users={users}
-                    totalMembers={group.members.length}
-                    replyToMessage={replyToMessage}
-                  />
+                <div key={message.id}>
+                  {showDateSeparator && <DateSeparator date={messageDate} />}
+                  <div data-message-id={message.id}>
+                    <ChatMessage
+                      message={message}
+                      user={getUserById(message.userId)}
+                      isOwn={message.userId === currentUserId}
+                      isUserOnline={isOnline(message.userId)}
+                      onEdit={onEditMessage}
+                      onDelete={onDeleteMessage}
+                      onTogglePin={onTogglePin}
+                      onReply={handleReply}
+                      onForward={onForwardMessage ? handleForward : undefined}
+                      reactions={getReactionGroups(message.id)}
+                      onToggleReaction={handleToggleReaction}
+                      readBy={getReadBy(message.id)}
+                      users={users}
+                      totalMembers={group.members.length}
+                      replyToMessage={replyToMessage}
+                    />
+                  </div>
                 </div>
               );
             })}
