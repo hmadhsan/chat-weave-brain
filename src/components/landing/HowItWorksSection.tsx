@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Users, Lock, MessageSquare, Sparkles, ArrowRight } from 'lucide-react';
+import { Users, Lock, MessageSquare, Sparkles } from 'lucide-react';
 
 const steps = [
   {
@@ -8,6 +8,8 @@ const steps = [
     title: 'Start with your team',
     description: 'Begin in a normal group chat with your teammates.',
     visual: 'group',
+    gradient: 'from-violet-500/20 to-purple-600/20',
+    borderGlow: 'group-hover:shadow-violet-500/20',
   },
   {
     number: '02',
@@ -15,6 +17,8 @@ const steps = [
     title: 'Branch into privacy',
     description: 'Create a private side conversation with selected members.',
     visual: 'branch',
+    gradient: 'from-purple-500/20 to-fuchsia-600/20',
+    borderGlow: 'group-hover:shadow-purple-500/20',
   },
   {
     number: '03',
@@ -22,6 +26,8 @@ const steps = [
     title: 'Think freely',
     description: 'Brainstorm openly without AI watching or interrupting.',
     visual: 'brainstorm',
+    gradient: 'from-fuchsia-500/20 to-pink-600/20',
+    borderGlow: 'group-hover:shadow-fuchsia-500/20',
   },
   {
     number: '04',
@@ -29,13 +35,19 @@ const steps = [
     title: 'Summarize & share',
     description: 'Send your discussion to AI and share insights with the group.',
     visual: 'ai',
+    gradient: 'from-cyan-500/20 to-teal-600/20',
+    borderGlow: 'group-hover:shadow-cyan-500/20',
   },
 ];
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-24 px-6 bg-secondary/20">
-      <div className="container mx-auto max-w-6xl">
+    <section className="py-28 px-6 relative overflow-hidden">
+      {/* Animated background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/30 to-background" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl" />
+      
+      <div className="container mx-auto max-w-7xl relative z-10">
         {/* Header */}
         <motion.div
           className="text-center mb-20"
@@ -44,129 +56,180 @@ const HowItWorksSection = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <span className="inline-block text-sm font-medium text-primary mb-4 tracking-wide uppercase">
+          <motion.span 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-6 border border-primary/20"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+          >
+            <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             How it works
-          </span>
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Think better, together
+          </motion.span>
+          <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6">
+            Think better, <span className="text-gradient">together</span>
           </h2>
-          <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             A calm, intentional flow that helps teams refine ideas before bringing in AI.
           </p>
         </motion.div>
 
         {/* Visual Flow */}
         <div className="relative">
-          {/* Connection Line */}
-          <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent -translate-y-1/2" />
+          {/* Animated Connection Line */}
+          <div className="hidden lg:block absolute top-[200px] left-[12%] right-[12%] h-[2px] overflow-hidden">
+            <motion.div 
+              className="h-full bg-gradient-to-r from-violet-500 via-purple-500 via-fuchsia-500 to-cyan-500"
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.5, delay: 0.3 }}
+              style={{ transformOrigin: 'left' }}
+            />
+            {/* Animated glow dot */}
+            <motion.div
+              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary blur-sm"
+              initial={{ left: '0%' }}
+              animate={{ left: '100%' }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'linear', delay: 1.5 }}
+            />
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
             {steps.map((step, index) => (
               <motion.div
                 key={step.number}
-                className="relative"
-                initial={{ opacity: 0, y: 30 }}
+                className="relative group"
+                initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.15 }}
+                transition={{ duration: 0.6, delay: index * 0.15 }}
               >
                 {/* Card */}
-                <div className="relative bg-card border border-border rounded-2xl p-6 h-full hover:border-primary/30 hover:shadow-lg transition-all duration-300 group">
+                <div className={`relative bg-card/80 backdrop-blur-sm border border-border rounded-3xl p-6 h-full transition-all duration-500 group-hover:border-primary/40 group-hover:shadow-2xl ${step.borderGlow}`}>
+                  {/* Gradient overlay on hover */}
+                  <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${step.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  
                   {/* Step Number Badge */}
-                  <div className="absolute -top-3 left-6">
-                    <span className="inline-flex items-center justify-center px-3 py-1 text-xs font-semibold rounded-full bg-primary text-primary-foreground">
+                  <motion.div 
+                    className="absolute -top-4 left-6 z-10"
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <span className="inline-flex items-center justify-center px-4 py-1.5 text-xs font-bold rounded-full bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg">
                       Step {step.number}
                     </span>
-                  </div>
+                  </motion.div>
 
                   {/* Visual Illustration */}
-                  <div className="mt-4 mb-6 h-32 flex items-center justify-center">
-                    <StepVisual step={step.visual} isActive={index === 3} />
+                  <div className="relative mt-6 mb-8 h-36 flex items-center justify-center">
+                    <StepVisual step={step.visual} index={index} />
                   </div>
 
-                  {/* Icon */}
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-                    <step.icon className="w-5 h-5 text-primary" />
+                  {/* Icon with glow */}
+                  <div className="relative z-10 w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 border border-primary/20">
+                    <step.icon className="w-6 h-6 text-primary" />
+                    <div className="absolute inset-0 rounded-2xl bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
 
                   {/* Content */}
-                  <h3 className="font-display text-lg font-semibold text-foreground mb-2">
+                  <h3 className="relative z-10 font-display text-xl font-bold text-foreground mb-3">
                     {step.title}
                   </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="relative z-10 text-sm text-muted-foreground leading-relaxed">
                     {step.description}
                   </p>
                 </div>
 
-                {/* Arrow connector (desktop) */}
+                {/* Connection node (desktop) */}
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10">
-                    <div className="w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center">
-                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                  <motion.div 
+                    className="hidden lg:flex absolute -right-3 top-[200px] -translate-y-1/2 z-20"
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.5 + index * 0.2, type: 'spring' }}
+                  >
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+                      <div className="w-2 h-2 rounded-full bg-primary-foreground" />
                     </div>
-                  </div>
+                  </motion.div>
                 )}
               </motion.div>
             ))}
           </div>
         </div>
 
-        {/* Bottom tagline */}
-        <motion.p
-          className="text-center text-muted-foreground mt-16 text-sm"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+        {/* Bottom tagline with animation */}
+        <motion.div
+          className="text-center mt-20"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
         >
-          AI joins the conversation only when you're ready.
-        </motion.p>
+          <p className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-secondary/50 border border-border text-muted-foreground text-sm">
+            <Sparkles className="w-4 h-4 text-primary" />
+            AI joins the conversation only when you're ready
+            <Sparkles className="w-4 h-4 text-accent" />
+          </p>
+        </motion.div>
       </div>
     </section>
   );
 };
 
 // Visual illustrations for each step
-const StepVisual = ({ step, isActive }: { step: string; isActive: boolean }) => {
-  const baseClasses = "transition-all duration-500";
-  
+const StepVisual = ({ step, index }: { step: string; index: number }) => {
   switch (step) {
     case 'group':
       return (
-        <div className={`${baseClasses} relative`}>
-          {/* Main chat bubble */}
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Main chat container */}
           <motion.div
-            className="w-32 h-20 rounded-xl bg-gradient-to-br from-muted to-secondary border border-border flex items-end justify-center pb-2"
-            initial={{ scale: 0.9 }}
-            whileInView={{ scale: 1 }}
+            className="w-36 h-24 rounded-2xl bg-gradient-to-br from-secondary to-muted border border-border/50 shadow-xl overflow-hidden"
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
+            transition={{ delay: index * 0.1 }}
           >
+            {/* Header bar */}
+            <div className="h-6 bg-secondary/80 border-b border-border/30 flex items-center px-2 gap-1">
+              <div className="w-2 h-2 rounded-full bg-red-400/60" />
+              <div className="w-2 h-2 rounded-full bg-yellow-400/60" />
+              <div className="w-2 h-2 rounded-full bg-green-400/60" />
+            </div>
             {/* Avatar group */}
-            <div className="flex -space-x-2">
-              {[0, 1, 2, 3].map((i) => (
-                <motion.div
-                  key={i}
-                  className="w-6 h-6 rounded-full bg-primary/20 border-2 border-card flex items-center justify-center"
-                  initial={{ opacity: 0, scale: 0 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.1 + i * 0.1 }}
-                >
-                  <div className="w-2 h-2 rounded-full bg-primary/60" />
-                </motion.div>
-              ))}
+            <div className="flex items-center justify-center pt-3 pb-2">
+              <div className="flex -space-x-2">
+                {[0, 1, 2, 3].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/40 to-accent/40 border-2 border-card flex items-center justify-center shadow-md"
+                    initial={{ opacity: 0, scale: 0, y: 10 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.1, type: 'spring' }}
+                  >
+                    <div className="w-3 h-3 rounded-full bg-primary/80" />
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
-          {/* Message dots */}
+          {/* Floating message indicators */}
           <motion.div
-            className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-1"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-1.5"
+            initial={{ opacity: 0, y: 5 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.7 }}
           >
             {[0, 1, 2].map((i) => (
-              <div key={i} className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+              <motion.div 
+                key={i} 
+                className="w-2 h-2 rounded-full bg-primary/60"
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+              />
             ))}
           </motion.div>
         </div>
@@ -174,77 +237,109 @@ const StepVisual = ({ step, isActive }: { step: string; isActive: boolean }) => 
 
     case 'branch':
       return (
-        <div className={`${baseClasses} relative`}>
+        <div className="relative w-full h-full flex items-center justify-center">
           {/* Main chat (faded) */}
-          <div className="w-24 h-14 rounded-lg bg-muted/50 border border-border/50 absolute left-0 top-0 opacity-50" />
-          {/* Branch line */}
-          <motion.svg
-            className="absolute left-12 top-7 w-12 h-12"
-            viewBox="0 0 48 48"
-            initial={{ pathLength: 0, opacity: 0 }}
-            whileInView={{ pathLength: 1, opacity: 1 }}
+          <motion.div 
+            className="w-24 h-16 rounded-xl bg-muted/40 border border-border/30 absolute left-4 top-2"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 0.5 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ delay: 0.2 }}
+          />
+          {/* Animated branch line */}
+          <motion.svg
+            className="absolute left-14 top-8 w-20 h-20"
+            viewBox="0 0 80 80"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
           >
             <motion.path
-              d="M0 0 Q24 0 24 24 T48 48"
+              d="M0 0 Q20 0 30 20 T60 60"
               fill="none"
-              stroke="hsl(var(--primary))"
-              strokeWidth="2"
-              strokeDasharray="4 4"
+              stroke="url(#branchGradient)"
+              strokeWidth="3"
+              strokeLinecap="round"
               initial={{ pathLength: 0 }}
               whileInView={{ pathLength: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.3 }}
+              transition={{ duration: 1, delay: 0.4 }}
             />
+            <defs>
+              <linearGradient id="branchGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" />
+              </linearGradient>
+            </defs>
           </motion.svg>
-          {/* Private thread */}
+          {/* Private thread card */}
           <motion.div
-            className="w-20 h-14 rounded-lg bg-primary/10 border-2 border-primary/40 absolute right-0 bottom-0 flex items-center justify-center"
-            initial={{ opacity: 0, x: -10 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            className="w-24 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-purple-600/20 border-2 border-primary/50 absolute right-4 bottom-2 flex items-center justify-center shadow-lg shadow-primary/20"
+            initial={{ opacity: 0, scale: 0.8, x: -20 }}
+            whileInView={{ opacity: 1, scale: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.8, type: 'spring' }}
+          >
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Lock className="w-5 h-5 text-primary" />
+            </motion.div>
+          </motion.div>
+          {/* Lock icon on main */}
+          <motion.div
+            className="absolute left-8 top-6 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
           >
-            <Lock className="w-4 h-4 text-primary" />
+            <Lock className="w-3 h-3 text-primary/60" />
           </motion.div>
         </div>
       );
 
     case 'brainstorm':
       return (
-        <div className={`${baseClasses} relative flex items-center justify-center`}>
-          {/* Chat bubbles floating */}
-          <div className="relative w-32 h-24">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Floating chat bubbles */}
+          <div className="relative w-36 h-28">
             {[
-              { x: 0, y: 8, delay: 0.1, size: 'w-16 h-8' },
-              { x: 20, y: 0, delay: 0.25, size: 'w-12 h-6' },
-              { x: 8, y: 18, delay: 0.4, size: 'w-14 h-7' },
+              { x: 0, y: 12, delay: 0.2, width: 'w-20', height: 'h-10' },
+              { x: 48, y: 0, delay: 0.4, width: 'w-16', height: 'h-8' },
+              { x: 16, y: 50, delay: 0.6, width: 'w-18', height: 'h-9' },
             ].map((bubble, i) => (
               <motion.div
                 key={i}
-                className={`absolute ${bubble.size} rounded-lg bg-primary/10 border border-primary/20`}
+                className={`absolute ${bubble.width} ${bubble.height} rounded-xl bg-gradient-to-br from-primary/15 to-fuchsia-500/15 border border-primary/30 backdrop-blur-sm`}
                 style={{ left: bubble.x, top: bubble.y }}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 15, scale: 0.8 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: bubble.delay }}
+                transition={{ delay: bubble.delay, type: 'spring' }}
               >
-                <div className="h-full w-full flex items-center justify-center gap-1 px-2">
+                <div className="h-full w-full flex items-center justify-center gap-1.5 px-3">
                   {[0, 1, 2].map((j) => (
-                    <div key={j} className="w-1 h-1 rounded-full bg-primary/40" />
+                    <motion.div 
+                      key={j} 
+                      className="w-1.5 h-1.5 rounded-full bg-primary/50"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: j * 0.2 + i * 0.3 }}
+                    />
                   ))}
                 </div>
               </motion.div>
             ))}
             {/* No AI indicator */}
             <motion.div
-              className="absolute -right-2 -bottom-2 px-2 py-1 rounded-full bg-muted text-[10px] font-medium text-muted-foreground border border-border"
+              className="absolute -right-2 bottom-0 px-3 py-1.5 rounded-full bg-secondary text-xs font-semibold text-muted-foreground border border-border flex items-center gap-1.5 shadow-md"
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.6 }}
+              transition={{ delay: 0.9, type: 'spring' }}
             >
+              <MessageSquare className="w-3 h-3" />
               No AI
             </motion.div>
           </div>
@@ -253,42 +348,61 @@ const StepVisual = ({ step, isActive }: { step: string; isActive: boolean }) => 
 
     case 'ai':
       return (
-        <div className={`${baseClasses} relative flex items-center justify-center`}>
-          {/* AI Summary bubble */}
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* AI Summary card */}
           <motion.div
             className="relative"
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.5, type: 'spring' }}
           >
-            <div className="w-28 h-20 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/30 p-3">
-              {/* Summary lines */}
-              <div className="space-y-1.5">
-                <div className="w-full h-1.5 rounded-full bg-primary/30" />
-                <div className="w-4/5 h-1.5 rounded-full bg-primary/20" />
-                <div className="w-3/5 h-1.5 rounded-full bg-primary/20" />
+            <div className="w-32 h-24 rounded-2xl bg-gradient-to-br from-primary/20 via-accent/15 to-cyan-500/20 border border-primary/40 p-4 shadow-xl shadow-primary/10">
+              {/* Summary lines with animation */}
+              <div className="space-y-2">
+                {[1, 0.75, 0.5].map((width, i) => (
+                  <motion.div
+                    key={i}
+                    className="h-2 rounded-full bg-gradient-to-r from-primary/40 to-accent/40"
+                    style={{ width: `${width * 100}%` }}
+                    initial={{ scaleX: 0 }}
+                    whileInView={{ scaleX: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.4 + i * 0.15, duration: 0.4 }}
+                  />
+                ))}
               </div>
             </div>
-            {/* AI badge */}
+            {/* AI sparkle badge */}
             <motion.div
-              className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg"
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
+              className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/40"
+              initial={{ scale: 0, rotate: -180 }}
+              whileInView={{ scale: 1, rotate: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.3, type: 'spring' }}
+              transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
             >
-              <Sparkles className="w-4 h-4 text-primary-foreground" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
+              >
+                <Sparkles className="w-5 h-5 text-primary-foreground" />
+              </motion.div>
             </motion.div>
-            {/* Share arrow */}
+            {/* Share indicator */}
             <motion.div
-              className="absolute -bottom-3 left-1/2 -translate-x-1/2"
-              initial={{ opacity: 0, y: -5 }}
+              className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1"
+              initial={{ opacity: 0, y: -10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.5 }}
+              transition={{ delay: 0.8 }}
             >
-              <ArrowRight className="w-4 h-4 text-accent rotate-90" />
+              <motion.div
+                className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center"
+                animate={{ y: [0, 4, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <Sparkles className="w-3 h-3 text-accent" />
+              </motion.div>
             </motion.div>
           </motion.div>
         </div>
