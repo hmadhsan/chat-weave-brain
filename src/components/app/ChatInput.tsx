@@ -229,37 +229,43 @@ const ChatInput = ({
             users={users}
           />
           
+          {/* Send Button - Human message to group */}
           <Button
             onClick={handleSend}
             disabled={(!content.trim() && !selectedFile) || disabled || isUploading || isAILoading}
-            size="icon"
-            className="shrink-0 h-9 w-9 rounded-xl"
+            variant="secondary"
+            className="shrink-0 h-9 px-4 rounded-xl gap-2 font-medium"
           >
             {isUploading ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Send className="w-4 h-4" />
+              <>
+                <Send className="w-4 h-4" />
+                <span className="text-sm">Send</span>
+              </>
             )}
           </Button>
           
+          {/* Ask AI Button - AI query, response appears in chat */}
           {onAskAI && (
             <Button
               onClick={handleAskAI}
               disabled={!content.trim() || disabled || isUploading || isAILoading}
-              size="icon"
-              className="shrink-0 h-9 w-9 rounded-xl bg-primary hover:bg-primary/90"
-              title="Ask AI"
+              className="shrink-0 h-9 px-4 rounded-xl gap-2 font-medium bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white shadow-md hover:shadow-lg transition-all duration-200"
             >
               {isAILoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Sparkles className="w-4 h-4" />
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm">Ask AI</span>
+                </>
               )}
             </Button>
           )}
         </div>
         <p className="text-[10px] text-muted-foreground mt-1.5 ml-1">
-          Press Enter to send • Shift+Enter for new line • @ to mention {onAskAI && '• Click ✨ to Ask AI'}
+          Press Enter to send • Shift+Enter for new line • @ to mention
         </p>
       </div>
     </div>
