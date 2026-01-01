@@ -168,18 +168,26 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
           >
             <a 
-              href="https://www.producthunt.com/products/sidechat-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-sidechat-2" 
+              href="https://www.producthunt.com/posts/sidechat-2?embed=true&utm_source=badge-featured&utm_medium=badge&utm_souce=badge-sidechat-2" 
               target="_blank" 
               rel="noopener noreferrer"
               aria-label="View Sidechat on Product Hunt"
             >
               <img 
-                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1054816&theme=neutral&t=1766784507312" 
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1054816&theme=dark" 
                 alt="Sidechat - Private Brainstorm Threads for Group AI Chats | Product Hunt" 
                 width="250" 
                 height="54"
                 loading="lazy"
-                className="hover:opacity-90 transition-opacity"
+                className="hover:opacity-90 transition-opacity dark:block hidden"
+              />
+              <img 
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1054816&theme=light" 
+                alt="Sidechat - Private Brainstorm Threads for Group AI Chats | Product Hunt" 
+                width="250" 
+                height="54"
+                loading="lazy"
+                className="hover:opacity-90 transition-opacity dark:hidden block"
               />
             </a>
           </motion.div>
