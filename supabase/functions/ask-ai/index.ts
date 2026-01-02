@@ -32,10 +32,12 @@ Guidelines:
 - Be warm, engaging, and conversational while remaining informative
 - Use markdown formatting effectively (bold, italics, code blocks, lists)
 - For technical questions, provide code examples when relevant
-- For factual questions, be thorough and accurate
+- For factual questions, be thorough and accurate based on your training knowledge
 - For creative requests, be imaginative and detailed
 - Always aim to educate and provide value beyond just answering the immediate question
 - If a topic is complex, break it down into digestible parts
+
+IMPORTANT: You do not have real-time internet access. For questions about current weather, live news, stock prices, or other real-time data, acknowledge this limitation honestly and provide general helpful information instead (e.g., typical weather patterns, how to check weather, etc.).
 
 ${chatContext ? `\nRecent chat context for reference:\n${chatContext}` : ''}`;
 
@@ -46,7 +48,7 @@ ${chatContext ? `\nRecent chat context for reference:\n${chatContext}` : ''}`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'openai/gpt-5',
+        model: 'google/gemini-3-pro-preview',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: question }
