@@ -344,14 +344,20 @@ const AppShell = () => {
   };
 
   // Handle "Ask AI" in group chat - sends user message + gets AI response
-  const handleAskAIInChat = useCallback(async (userMessage: string) => {
+  const handleAskAIInChat = useCallback(async (userMessage: string, file?: { url: string; name: string; type: string; size: number } | null) => {
     if (!activeGroupId || !user) return;
 
     setIsAskingAI(true);
 
     try {
-      // First, post the user's question to the group chat
-      await dbSendMessage(`💬 **Question for AI:** ${userMessage}`, false, null, null, null);
+      // First, post the user's question to the group chat (with file if attached)
+      await dbSendMessage(
+        `💬 **Question for AI:** ${userMessage}`,
+        false,
+        null,
+        null,
+        file ? { url: file.url, name: file.name, type: file.type, size: file.size } : null
+      );
 
       // Build context from recent messages for better AI understanding
       const recentContext = groupMessages.slice(-15).map((m) => {
@@ -359,10 +365,16 @@ const AppShell = () => {
         return `${msgUser?.name || 'Unknown'}: ${m.content}`;
       }).join('\n');
 
+      // Include file info in the AI context if provided
+      let aiQuestion = userMessage;
+      if (file) {
+        aiQuestion += `\n\n[User attached a file: ${file.name} (${file.type})]`;
+      }
+
       // Call the AI function for direct conversational answers
       const { data, error } = await supabase.functions.invoke('ask-ai', {
         body: { 
-          question: userMessage,
+          question: aiQuestion,
           chatContext: recentContext
         }
       });
