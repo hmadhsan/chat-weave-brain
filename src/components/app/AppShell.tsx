@@ -359,11 +359,11 @@ const AppShell = () => {
         return `${msgUser?.name || 'Unknown'}: ${m.content}`;
       }).join('\n');
 
-      // Call the AI function
-      const { data, error } = await supabase.functions.invoke('chat-ai', {
+      // Call the AI function for direct conversational answers
+      const { data, error } = await supabase.functions.invoke('ask-ai', {
         body: { 
-          threadContext: `Recent chat context:\n${recentContext}\n\nUser question: ${userMessage}`,
-          threadName: activeGroup?.name || 'Group Chat'
+          question: userMessage,
+          chatContext: recentContext
         }
       });
 
