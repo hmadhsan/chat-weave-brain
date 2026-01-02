@@ -20,7 +20,7 @@ interface ReplyTo {
 
 interface ChatInputProps {
   onSend: (content: string, file?: { url: string; name: string; type: string; size: number } | null) => void;
-  onAskAI?: (content: string) => Promise<void>;
+  onAskAI?: (content: string, file?: { url: string; name: string; type: string; size: number } | null) => Promise<void>;
   placeholder?: string;
   disabled?: boolean;
   onTyping?: () => void;
@@ -90,15 +90,24 @@ const ChatInput = ({
   };
 
   const handleAskAI = async () => {
-    if (!content.trim() || disabled || isUploading || isAILoading || !onAskAI) return;
+    if ((!content.trim() && !selectedFile) || disabled || isUploading || isAILoading || !onAskAI) return;
     
+    let uploadedFile = null;
+
+    if (selectedFile) {
+      uploadedFile = await uploadFile(selectedFile);
+      if (!uploadedFile && !content.trim()) return;
+    }
+
     const messageContent = content.trim();
     setContent('');
+    setSelectedFile(null);
+    setPreviewUrl(null);
     if (onStopTyping) {
       onStopTyping();
     }
     
-    await onAskAI(messageContent);
+    await onAskAI(messageContent, uploadedFile);
   };
 
   const handleEmojiSelect = (emoji: string) => {

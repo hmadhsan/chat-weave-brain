@@ -70,7 +70,7 @@ interface GroupChatProps {
   onEditGroupName?: (newName: string) => Promise<void>;
   onEditThreadName?: (threadId: string, newName: string) => Promise<boolean>;
   isGroupOwner?: boolean;
-  onAskAI?: (content: string) => Promise<void>;
+  onAskAI?: (content: string, file?: { url: string; name: string; type: string; size: number } | null) => Promise<void>;
   isAILoading?: boolean;
 }
 
